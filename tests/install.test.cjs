@@ -43,6 +43,7 @@ test('install lays out a versioned runtime, launcher, icon and desktop entry wit
   assert.ok(fs.existsSync(path.join(prefix, 'share/icons/hicolor/512x512/apps/notion-desktop.png')));
   const desktop = fs.readFileSync(path.join(prefix, 'share/applications/notion-desktop.desktop'), 'utf8');
   assert.match(desktop, /^StartupWMClass=notion-desktop$/m);
+  assert.match(desktop, new RegExp(`^Icon=${path.join(prefix, 'share/icons/hicolor/512x512/apps/notion-desktop.png').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'm'));
   assert.match(desktop, /^MimeType=x-scheme-handler\/notion;x-scheme-handler\/notion-agents;$/m);
   assert.match(desktop, new RegExp(`^Exec="${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/bin/notion-desktop" -- %u$`, 'm'));
 

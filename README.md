@@ -24,9 +24,9 @@ electron-transplant report notion                # what Mac-only APIs it hit at 
 atomic `current` symlink (old runtimes stay for rollback), plus a launcher in
 `~/.local/bin`, a desktop entry registering the app's URL schemes, and the icon.
 Profiles (`~/.config/Linear`, `~/.config/Notion`) are never touched.
-If `~/.local/share/icons/hicolor/icon-theme.cache` exists (some installers create one),
-it is regenerated after the icon is added; launchers that trust the cache (Vicinae)
-otherwise show no icon.
+The desktop entry names its icon by absolute path: Vicinae ignores
+`~/.local/share/icons/hicolor` (no `index.theme`), so a theme name shows a placeholder
+there. An existing `icon-theme.cache` in that directory is also regenerated for GTK.
 
 | App | Launcher | Schemes | Native code |
 | --- | --- | --- | --- |
