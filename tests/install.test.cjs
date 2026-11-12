@@ -75,3 +75,24 @@ test('desktop entries quote Exec per the spec and stay on one line per key', () 
   assert.match(entry, /^Name=No tion$/m);
   assert.doesNotMatch(entry, /MimeType/);
 });
+
+test('an existing icon cache is regenerated so launchers that trust it see the new icon', (t) => {
+  try { execFileSync('gtk-update-icon-cache', ['--help'], { stdio: 'ignore' }); } catch (error) {
+    if (error.code === 'ENOENT') return t.skip('gtk-update-icon-cache not installed');
+  }
+  const prefix = fs.mkdtempSync(path.join(os.tmpdir(), 'et-iconcache-'));
+  const theme = path.join(prefix, 'share/icons/hicolor');
+  fs.mkdirSync(path.join(theme, '256x256/apps'), { recursive: true });
+  fs.writeFileSync(path.join(theme, '256x256/apps/other.png'), 'png');
+  execFileSync('gtk-update-icon-cache', ['-f', '-q', '-t', theme]);
+  assert.doesNotMatch(fs.readFileSync(path.join(theme, 'icon-theme.cache'), 'latin1'), /notion-desktop/);
+  install({ config: notion, runtime: fakeRuntime(prefix, {}), prefix, log: () => {} });
+  const cache = fs.readFileSync(path.join(theme, 'icon-theme.cache'), 'latin1');
+  assert.match(cache, /notion-desktop/);
+  assert.match(cache, /other/);
+
+  // No cache: none is created.
+  const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'et-nocache-'));
+  install({ config: notion, runtime: fakeRuntime(bare, {}), prefix: bare, log: () => {} });
+  assert.equal(fs.existsSync(path.join(bare, 'share/icons/hicolor/icon-theme.cache')), false);
+});
