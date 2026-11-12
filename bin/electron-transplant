@@ -1,0 +1,109 @@
+#!/usr/bin/env node
+'use strict';
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const ROOT = path.resolve(__dirname, '..');
+const { listApps, loadApp } = require(path.join(ROOT, 'lib/apps.cjs'));
+
+const USAGE = `electron-transplant: run macOS Electron apps on Linux Electron
+
+  electron-transplant apps
+      List app configs (apps/<id>/app.cjs).
+  electron-transplant build <app> [--dmg PATH] [--install] [--prefix DIR] [--accept-unpinned]
+      Extract the macOS app from its DMG (newest ~/Downloads match by default),
+      verify it, patch it and assemble it on the same Electron version for Linux.
+      --install installs under ~/.local (or --prefix); the profile is untouched.
+  electron-transplant inspect <app> [--dmg PATH]
+      Survey a DMG: versions, native code, macOS window chrome, URL schemes,
+      platform checks. For writing a new app config.
+  electron-transplant report <app> [--log FILE] [--json]
+      Summarise the compat recorder's log: macOS/Windows-only APIs, failed native
+      loads, missing executables and errors the app hit at runtime.
+  electron-transplant gen-platform-apis <electron.d.ts> <version>
+      Regenerate compat/platform-apis/electron-<version>.json.
+`;
+
+function parseArgs(argv, { flags = [], values = [] }) {
+  const out = { _: [] };
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (flags.includes(arg)) out[arg.slice(2)] = true;
+    else if (values.includes(arg)) {
+      if (i + 1 >= argv.length) throw Error(`Missing value for ${arg}`);
+      out[arg.slice(2)] = argv[++i];
+    } else if (arg.startsWith('-')) throw Error(`Unknown option ${arg}`);
+    else out._.push(arg);
+  }
+  return out;
+}
+
+async function main(argv) {
+  const [command, ...rest] = argv;
+  switch (command) {
+    case 'apps': {
+      for (const id of listApps()) {
+        const { config } = loadApp(id);
+        const versions = [...new Set((config.pins ?? []).map((p) => `${p.version} (Electron ${p.electron})`))].join(', ');
+        console.log(`${id.padEnd(10)} ${config.name.padEnd(10)} -> ${config.install.command.padEnd(16)} pinned: ${versions || 'none'}`);
+      }
+      return;
+    }
+    case 'build': {
+      const args = parseArgs(rest, { flags: ['--install', '--accept-unpinned'], values: ['--dmg', '--prefix'] });
+      if (args._.length !== 1) throw Error('Usage: electron-transplant build <app> [options]');
+      const { config, dir } = loadApp(args._[0]);
+      const { build } = require(path.join(ROOT, 'lib/build.cjs'));
+      const result = await build({
+        config, configDir: dir, dmg: args.dmg, acceptUnpinned: args['accept-unpinned'],
+        workRoot: path.join(ROOT, 'build'),
+      });
+      if (!args.install) {
+        console.log(`Build only. Try it with a throwaway profile:\n  env -u ELECTRON_RUN_AS_NODE ${result.runtime}/electron --user-data-dir=${result.work}/profile`);
+        console.log('Add --install to install it. No profile or installation was modified.');
+        return;
+      }
+      const prefix = path.resolve(args.prefix ?? path.join(os.homedir(), '.local'));
+      require(path.join(ROOT, 'lib/install.cjs')).install({ config, runtime: result.runtime, prefix });
+      console.log(`Quit and reopen ${config.name} to use the new build.`);
+      return;
+    }
+    case 'inspect': {
+      const args = parseArgs(rest, { values: ['--dmg'] });
+      if (args._.length !== 1) throw Error('Usage: electron-transplant inspect <app> [--dmg PATH]');
+      const { config, dir } = loadApp(args._[0]);
+      await require(path.join(ROOT, 'lib/inspect.cjs')).inspect({ config, configDir: dir, dmg: args.dmg, workRoot: path.join(ROOT, 'build') });
+      return;
+    }
+    case 'report': {
+      const args = parseArgs(rest, { flags: ['--json'], values: ['--log'] });
+      if (args._.length !== 1) throw Error('Usage: electron-transplant report <app> [--log FILE] [--json]');
+      const { config } = loadApp(args._[0]);
+      const { defaultLogPath } = require(path.join(ROOT, 'compat/runtime.cjs'));
+      const logPath = args.log ?? process.env[`${config.envPrefix}_COMPAT_LOG`] ?? defaultLogPath(config.id);
+      require(path.join(ROOT, 'lib/report.cjs')).report(logPath, { json: args.json });
+      return;
+    }
+    case 'gen-platform-apis': {
+      const [dts, version] = rest;
+      if (!dts || !/^\d+\.\d+\.\d+$/.test(version ?? '')) throw Error('Usage: electron-transplant gen-platform-apis <electron.d.ts> <version>');
+      const { generateTable, tableStats } = require(path.join(ROOT, 'lib/platform-apis.cjs'));
+      const table = generateTable(fs.readFileSync(dts, 'utf8'), version);
+      const out = path.join(ROOT, 'compat/platform-apis', `electron-${version}.json`);
+      fs.writeFileSync(out, JSON.stringify(table, null, 1) + '\n');
+      const stats = tableStats(table);
+      console.log(`Wrote ${out}: ${stats.members} non-Linux members across ${stats.types} types, ${stats.exports} main exports`);
+      return;
+    }
+    case undefined: case 'help': case '--help': case '-h':
+      process.stdout.write(USAGE);
+      return;
+    default:
+      throw Error(`Unknown command ${command}\n\n${USAGE}`);
+  }
+}
+
+main(process.argv.slice(2)).catch((error) => {
+  console.error(`electron-transplant: ${error.message}`);
+  process.exit(1);
+});

@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Window controls</title>
+<style>
+  /* macOS window buttons: 14x16 frames 20px apart, 12px circles. */
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; user-select: none; }
+  body { width: 54px; height: 16px; position: relative; -webkit-app-region: drag; cursor: default; }
+  button {
+    position: absolute; top: 0; width: 14px; height: 16px; padding: 0; margin: 0;
+    border: 0; background: none; outline: none; -webkit-app-region: no-drag;
+  }
+  button:nth-of-type(1) { left: 0; }
+  button:nth-of-type(2) { left: 20px; }
+  button:nth-of-type(3) { left: 40px; }
+  /* One SVG per button: the circle and its glyph share a centre (6, 6), so the
+     glyph can't drift off it (a CSS border once pushed it 1 device px down-right). */
+  .light { position: absolute; left: 1px; top: 2px; width: 12px; height: 12px; overflow: visible; }
+  .disc { fill: var(--fill); stroke: var(--edge); stroke-width: 0.5px; }
+  .glyph { opacity: 0; }
+  .glyph * { stroke: var(--glyph); fill: var(--glyph); }
+  .close { --fill: #ff5f57; --edge: #e0443e; --glyph: #4c0002; }
+  .minimize { --fill: #febc2e; --edge: #dea123; --glyph: #985712; }
+  .zoom { --fill: #28c840; --edge: #1aab29; --glyph: #0a6517; }
+  /* Unfocused window: grey, unless the pointer is over the group (as on macOS). */
+  body.inactive:not(:hover) .light { --fill: #dcdcdc; --edge: #c8c8c8; }
+  body.inactive.dark:not(:hover) .light { --fill: #3d3d3f; --edge: #4a4a4c; }
+  body:hover .glyph { opacity: 1; }
+  button:active .light { filter: brightness(0.82); }
+  body.hover-only:not(:hover) button { opacity: 0; }
+</style>
+</head>
+<body class="inactive">
+  <button type="button" data-action="close" aria-label="Close window">
+    <svg class="light close" viewBox="0 0 12 12"><circle class="disc" cx="6" cy="6" r="5.75"/>
+      <g class="glyph"><path d="M3.6 3.6 8.4 8.4M8.4 3.6 3.6 8.4" stroke-width="1.2" stroke-linecap="round" fill="none"/></g></svg>
+  </button>
+  <button type="button" data-action="minimize" aria-label="Minimize window">
+    <svg class="light minimize" viewBox="0 0 12 12"><circle class="disc" cx="6" cy="6" r="5.75"/>
+      <g class="glyph"><path d="M3 6h6" stroke-width="1.2" stroke-linecap="round" fill="none"/></g></svg>
+  </button>
+  <button type="button" data-action="zoom" aria-label="Toggle full screen (Alt-click to maximize)">
+    <svg class="light zoom" viewBox="0 0 12 12"><circle class="disc" cx="6" cy="6" r="5.75"/>
+      <g class="glyph"><path d="M3.5 6v2.5H6z M8.5 6V3.5H6z" stroke="none"/></g></svg>
+  </button>
+<script>
+  for (const button of document.querySelectorAll('button')) {
+    button.addEventListener('click', (event) => window.trafficLights.action(button.dataset.action, event.altKey));
+  }
+  window.trafficLights.onState((state) => {
+    document.body.classList.toggle('inactive', !state.focused);
+    document.body.classList.toggle('dark', state.dark === true);
+    document.body.classList.toggle('hover-only', state.hoverOnly === true);
+  });
+</script>
+</body>
+</html>
