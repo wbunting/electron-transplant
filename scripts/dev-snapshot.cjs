@@ -17,14 +17,16 @@ async function main(argv) {
   const scaleAt = args.indexOf('--scale');
   const scale = scaleAt === -1 ? '2' : args.splice(scaleAt, 2)[1];
   const [runtime, outDir, scriptFile] = args.map((p) => path.resolve(p));
+  // Installed runtimes are reached through the `current` symlink.
+  const runtimeDir = fs.realpathSync(runtime);
   if (!scriptFile) throw Error('Usage: dev-snapshot.cjs RUNTIME_DIR OUT_DIR SCRIPT.json [--scale N] [-- APP_ARGS...]');
   fs.mkdirSync(outDir, { recursive: true, mode: 0o700 });
   const dev = path.join(outDir, 'devrt');
   fs.rmSync(dev, { recursive: true, force: true });
-  fs.cpSync(runtime, dev, { recursive: true, verbatimSymlinks: true });
+  fs.cpSync(runtimeDir, dev, { recursive: true, verbatimSymlinks: true });
   const app = path.join(outDir, 'devapp');
   fs.rmSync(app, { recursive: true, force: true });
-  asar.extractAll(path.join(runtime, 'resources/app.asar'), app);
+  asar.extractAll(path.join(runtimeDir, 'resources/app.asar'), app);
   fs.copyFileSync(path.join(__dirname, 'dev-harness.cjs'), path.join(app, 'linux-compat/dev-harness.cjs'));
   fs.appendFileSync(path.join(app, 'linux-compat/entry.cjs'), "\n// DEV ONLY (dev-snapshot copy).\nrequire('./dev-harness.cjs')(electron);\n");
   fs.rmSync(path.join(dev, 'resources/app.asar'));
