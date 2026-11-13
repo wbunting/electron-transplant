@@ -7,6 +7,9 @@
 const MAIN = 'main.js';
 const WORKER = 'bindings_worker.js';
 const FONTS = './linux-figma/fonts.cjs';
+// Browser sign-in returns to the app through <desktop_protocol>://app_auth/redeem.
+// figma:// belongs to figma-linux-next here, so this app asks for its own scheme.
+const AUTH_SCHEME = 'figma-desktop';
 
 module.exports = {
   id: 'figma',
@@ -28,10 +31,9 @@ module.exports = {
     name: 'Figma Desktop',
     comment: 'Figma — unofficial Linux port of the macOS desktop app',
     categories: 'Graphics;2DGraphics;VectorGraphics;',
-    defaultHandler: false,
-    actions: [
-      { id: 'FinishSignIn', name: 'Finish browser sign-in (copy the figma:// link first)', args: ['--finish-sign-in'] },
-    ],
+    // Registers figma:// too (Info.plist), but only takes over its own scheme.
+    schemes: [AUTH_SCHEME],
+    defaultSchemes: [AUTH_SCHEME],
   },
   asar: {
     // A placeholder header entry (size -1000, no data) that @electron/asar rejects.
@@ -81,6 +83,23 @@ module.exports = {
       file: MAIN,
       from: 'var AC=si(()=>DC?Xtt():',
       to: `var AC=si(()=>process.platform==="linux"?require(${JSON.stringify(FONTS)}):DC?Xtt():`,
+    },
+    {
+      // Browser sign-in: figma.com sends the sign-in back to
+      // `${desktop_protocol}://app_auth/redeem?g_secret=...`. Ask for figma-desktop://
+      // so it reaches this app rather than the figma:// handler.
+      name: 'auth-scheme-request',
+      file: MAIN,
+      from: 'i&&(i.searchParams.set("desktop_protocol",N.protocol),',
+      to: `i&&(i.searchParams.set("desktop_protocol",process.platform==="linux"?${JSON.stringify(AUTH_SCHEME)}:N.protocol),`,
+    },
+    {
+      // ...and accept figma-desktop:// links wherever figma:// ones are (app_auth
+      // redeem, files, community), mapped onto https://www.figma.com/ the same way.
+      name: 'auth-scheme-links',
+      file: MAIN,
+      from: 'N.protocol&&(t=t.replace(new RegExp(`^${N.protocol}:/{0,2}`),he.href));',
+      to: 'process.platform==="linux"&&(t=t.replace(/^' + AUTH_SCHEME + ':\\/{0,2}/i,he.href)),N.protocol&&(t=t.replace(new RegExp(`^${N.protocol}:/{0,2}`),he.href));',
     },
     {
       // Main windows are frameless with Figma's own window buttons in the tab bar

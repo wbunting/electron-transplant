@@ -32,7 +32,7 @@ there. An existing `icon-theme.cache` in that directory is also regenerated for 
 | --- | --- | --- | --- |
 | Linear 1.32.8 (Electron 44.9.1) | `linear-desktop` | `linear` | 3 trackpad addons → shims |
 | Notion 7.43.0 (Electron 45.1.0) | `notion-desktop` | `notion`, `notion-agents` | `better-sqlite3` → official Node-API prebuild; 3 others stubbed/trimmed |
-| Figma 126.11.9 (Electron 44.11.2) | `figma-desktop` | `figma` (registered, **not** default) | none loaded on Linux (Figma's own JS path); fonts → fontconfig module |
+| Figma 126.11.9 (Electron 44.11.2) | `figma-desktop` | `figma-desktop`; `figma` registered, **not** default | none loaded on Linux (Figma's own JS path); fonts → fontconfig module |
 
 (`linear` and `notion` are the CLIs, hence `-desktop`; `figma-desktop` sits beside
 figma-linux-next, which stays the `figma://` handler. See `apps/figma/NATIVE.md`.)
@@ -95,8 +95,9 @@ via a sanitised copy; the integrity check hashes the header as stored.
   (pre-Tahoe macOS). That is unverified against a real Mac.
 - **Protocol client guard** (`compat.defaultProtocolClient: false`): the app's
   `app.setAsDefaultProtocolClient` is recorded and declined (on Linux it runs
-  `xdg-settings`), for schemes another installed app keeps. `install.defaultHandler:
-  false` likewise registers the scheme in the desktop entry without `xdg-mime default`.
+  `xdg-settings`), for schemes another installed app keeps. `install.defaultSchemes`
+  likewise limits which registered schemes the install makes default (`xdg-mime
+  default`); the rest are only listed in the desktop entry.
   `<PREFIX>_DEFAULT_PROTOCOL_CLIENT=1` restores the call.
 - **Hooks** (`compat.hooks`): app files (from `addFiles`) the entry loads before the
   app's main, given `electron`, the env reader and the recorder.
@@ -119,7 +120,6 @@ Figma only (`apps/figma/NATIVE.md`):
 | --- | --- |
 | `FIGMA_DESKTOP_MCP_PORT=N` | serve Figma's MCP server on N instead of 3845 (figma-linux-next uses 3845) |
 | `FIGMA_DESKTOP_FRAMELESS=1` | frameless main window |
-| `figma-desktop --finish-sign-in` | pass a copied `figma://app_auth/redeem…` link to the running app (also a launcher action) |
 
 Launchers pass no sandbox-disabling switches (Chromium uses its user-namespace
 sandbox), which Linear refuses to start with anyway.
@@ -129,7 +129,7 @@ sandbox), which Linear refuses to start with anyway.
 1. Put its DMG in `~/Downloads` (or its own subdirectory, `dmg.dir`, to keep the
    untrusted download apart), copy an `apps/<id>/app.cjs`, set `id`, `name`,
    `bundleId`, `envPrefix`, `dmg`, `install` (`install.name` for the launcher name,
-   `install.actions` for desktop actions).
+   `install.schemes`/`install.defaultSchemes` for extra and default URL schemes).
 2. `electron-transplant inspect <id>` lists its native code (handled or not), Mach-O
    resources, how it loads Electron, macOS window-chrome calls, platform checks and
    whether configured patches match.

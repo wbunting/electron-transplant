@@ -1,6 +1,6 @@
 // Build and install features added for Figma, tested on their own: asar headers
 // with placeholder entries, loose native files, app-supplied files and hooks, the
-// default-protocol-client guard, desktop actions and non-default scheme handlers.
+// default-protocol-client guard and per-scheme default handlers.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
@@ -90,22 +90,17 @@ test('app files are added inside the app only, and configs referencing them are 
   assert.throws(() => validate({ ...base, compat: { hooks: ['l/hook.cjs'] } }, dir), /must be one of addFiles/);
   assert.throws(() => validate({ ...base, addFiles: { 'l/h.cjs': 'missing.cjs' } }, dir), /existing source/);
   assert.throws(() => validate({ ...base, nativeFiles: { 'a.node': { action: 'remove' } } }, dir), /reason/);
-  assert.throws(() => validate({ ...base, install: { ...base.install, actions: [{ id: 'A', name: 'a', args: ['; rm -rf ~'] }] } }, dir), /plain --flags/);
+  assert.throws(() => validate({ ...base, install: { ...base.install, defaultSchemes: ['figma;rm'] } }, dir), /list of URL schemes/);
 });
 
-test('desktop entries carry a display name and actions; defaultHandler false never sets the default', () => {
-  const config = {
-    id: 'x', name: 'X', envPrefix: 'X',
-    install: { id: 'x-desktop', command: 'x-desktop', name: 'X Desktop', defaultHandler: false, actions: [{ id: 'FinishSignIn', name: 'Finish sign-in', args: ['--finish-sign-in'] }] },
-  };
-  const entry = desktopEntry(config, '/p', ['x']);
+test('desktop entries carry a display name; only install.defaultSchemes are made the default', () => {
+  const config = { id: 'x', name: 'X', envPrefix: 'X', install: { id: 'x-desktop', command: 'x-desktop', name: 'X Desktop', schemes: ['x-own'], defaultSchemes: ['x-own'] } };
+  const entry = desktopEntry(config, '/p', ['x', 'x-own']);
   assert.match(entry, /^Name=X Desktop$/m);
-  assert.match(entry, /^MimeType=x-scheme-handler\/x;$/m);
-  assert.match(entry, /^Actions=FinishSignIn;$/m);
-  assert.match(entry, /^\[Desktop Action FinishSignIn\]\nName=Finish sign-in\nExec="\/p\/bin\/x-desktop" --finish-sign-in$/m);
+  assert.match(entry, /^MimeType=x-scheme-handler\/x;x-scheme-handler\/x-own;$/m);
 
   // Installed into the data home with a recording xdg-mime first on PATH.
-  const home = tmp('defaulthandler');
+  const home = tmp('defaultschemes');
   const bin = path.join(home, 'fakebin');
   fs.mkdirSync(bin);
   fs.writeFileSync(path.join(bin, 'xdg-mime'), `#!/bin/sh\necho "$@" >> "${home}/xdg-mime.log"\n`, { mode: 0o755 });
@@ -116,11 +111,16 @@ test('desktop entries carry a display name and actions; defaultHandler false nev
   const saved = { PATH: process.env.PATH, XDG_DATA_HOME: process.env.XDG_DATA_HOME };
   process.env.PATH = `${bin}:${process.env.PATH}`;
   process.env.XDG_DATA_HOME = path.join(home, 'share');
+  const log = path.join(home, 'xdg-mime.log');
   try {
-    install({ config, runtime, prefix: home, log: () => {} });
-    assert.equal(fs.existsSync(path.join(home, 'xdg-mime.log')), false);
-    install({ config: { ...config, install: { ...config.install, defaultHandler: undefined } }, runtime, prefix: home, log: () => {} });
-    assert.equal(fs.readFileSync(path.join(home, 'xdg-mime.log'), 'utf8').trim(), 'default x-desktop.desktop x-scheme-handler/x');
+    const result = install({ config, runtime, prefix: home, log: () => {} });
+    assert.deepEqual([result.schemes, result.defaults], [['x', 'x-own'], ['x-own']]);
+    assert.equal(fs.readFileSync(log, 'utf8').trim(), 'default x-desktop.desktop x-scheme-handler/x-own');
+    assert.match(fs.readFileSync(path.join(home, 'share/applications/x-desktop.desktop'), 'utf8'), /x-scheme-handler\/x;/);
+    // Without defaultSchemes, every registered scheme is taken over (Linear, Notion).
+    fs.rmSync(log);
+    install({ config: { ...config, install: { ...config.install, defaultSchemes: undefined } }, runtime, prefix: home, log: () => {} });
+    assert.deepEqual(fs.readFileSync(log, 'utf8').trim().split('\n'), ['default x-desktop.desktop x-scheme-handler/x', 'default x-desktop.desktop x-scheme-handler/x-own']);
   } finally {
     for (const [key, value] of Object.entries(saved)) if (value === undefined) delete process.env[key]; else process.env[key] = value;
   }

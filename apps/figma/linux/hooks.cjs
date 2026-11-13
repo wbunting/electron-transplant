@@ -1,19 +1,14 @@
 // Figma on Linux, main-process side (loaded by the compat entry before main.js).
 //
-// 1. MCP port. The web app starts Figma's MCP server (Dev Mode) on the port it
-//    asks for, 3845. Another app may hold it: figma-linux-next serves its own
-//    MCP server there. Figma treats EADDRINUSE as a "user error" and reports
-//    nothing; here it is recorded and explained once per session, naming the
-//    process that holds the port. FIGMA_DESKTOP_MCP_PORT=N serves on N instead.
+// MCP port. The web app starts Figma's MCP server (Dev Mode) on the port it
+// asks for, 3845. Another app may hold it: figma-linux-next serves its own MCP
+// server there. Figma treats EADDRINUSE as a "user error" and reports nothing;
+// here it is recorded and explained once per session, naming the process that
+// holds the port. FIGMA_DESKTOP_MCP_PORT=N serves on N instead.
 //
-// 2. Browser sign-in without owning figma://. The browser hands the sign-in back
-//    as figma://app_auth/redeem?g_secret=..., which goes to the default figma://
-//    handler (figma-linux-next here). `figma-desktop --finish-sign-in` takes that
-//    link from the clipboard and passes it to the running Figma Desktop through
-//    its own single-instance handoff (never on a command line), where Figma
-//    redeems it for the sign-in it started.
+// (Browser sign-in needs no code here: patches in app.cjs have it come back
+// through figma-desktop://, a scheme only this app registers.)
 'use strict';
-const { execFileSync, spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -109,82 +104,7 @@ function installMcpPortHandling({ electron, env, envPrefix, record }) {
   return { overridePort };
 }
 
-// --- Browser sign-in ------------------------------------------------------------
-
-const MAX_URL = 8192;
-
-// The sign-in link, as figma:// or https://www.figma.com, or null.
-function signInRedeemUrl(text) {
-  const value = String(text ?? '').trim();
-  if (!value || value.length > MAX_URL || /[\x00-\x20\x7f]/.test(value)) return null;
-  let url;
-  try { url = new URL(value); } catch { return null; }
-  if (url.username || url.password || url.port || url.hash) return null;
-  const figma = url.protocol === 'figma:' && url.hostname === 'app_auth' && url.pathname === '/redeem';
-  const web = url.protocol === 'https:' && url.hostname === 'www.figma.com' && url.pathname === '/app_auth/redeem';
-  if (!figma && !web) return null;
-  const secrets = url.searchParams.getAll('g_secret');
-  if (secrets.length !== 1 || !/^[\w.~-]{8,512}$/.test(secrets[0])) return null;
-  return value;
-}
-
-function readClipboard() {
-  const commands = process.env.WAYLAND_DISPLAY
-    ? [['wl-paste', ['--no-newline']]]
-    : [['xclip', ['-o', '-selection', 'clipboard']], ['xsel', ['--clipboard', '--output']]];
-  for (const [command, args] of commands) {
-    try { return execFileSync(command, args, { encoding: 'utf8', timeout: 5000, stdio: ['ignore', 'pipe', 'ignore'] }); } catch {}
-  }
-  return null;
-}
-
-function clearClipboardIf(value) {
-  if (readClipboard()?.trim() !== value) return;
-  if (process.env.WAYLAND_DISPLAY) spawnSync('wl-copy', ['--clear'], { timeout: 5000, stdio: 'ignore' });
-}
-
-function notify(body) {
-  // Fixed strings only: never clipboard contents.
-  spawnSync('notify-send', ['--app-name=Figma Desktop', 'Figma sign-in', body], { timeout: 5000, stdio: 'ignore' });
-  console.error(`figma-desktop: ${body}`);
-}
-
-// Chromium's singleton lock in the directory Figma locks (appData/Figma/Desktop).
-function runningInstancePid(appData) {
-  try {
-    const target = fs.readlinkSync(path.join(appData, 'Figma', 'Desktop', 'SingletonLock'));
-    const pid = Number(/-(\d+)$/.exec(target)?.[1]);
-    if (!pid) return null;
-    process.kill(pid, 0);
-    return pid;
-  } catch {
-    return null;
-  }
-}
-
-// Runs before Figma requests its single-instance lock: on success the link is
-// appended to process.argv, which Figma forwards to the running instance.
-function finishSignIn({ electron, argv = process.argv, read = readClipboard, running = runningInstancePid, say = notify, clear = clearClipboardIf }) {
-  const at = argv.indexOf(FINISH_SIGN_IN);
-  if (at === -1) return 'not-requested';
-  argv.splice(at, 1);
-  const fail = (body) => { say(body); electron.app.exit(1); return 'failed'; };
-  if (!running(electron.app.getPath('appData'))) {
-    return fail('Open Figma Desktop and click "Log in" first, then copy the sign-in link from the browser and try again.');
-  }
-  const url = signInRedeemUrl(read());
-  if (!url) {
-    return fail('The clipboard has no Figma sign-in link. In the browser, copy the "Open Figma" link (figma://app_auth/redeem…), then try again.');
-  }
-  // `--` keeps Figma's Linux argument parser from taking the link as a flag value.
-  argv.push('--', url);
-  clear(url);
-  say('Passing the sign-in to Figma Desktop.');
-  return 'forwarded';
-}
-
 module.exports = function figmaLinux({ electron, env, envPrefix, record }) {
-  finishSignIn({ electron });
   installMcpPortHandling({ electron, env, envPrefix, record });
 };
-Object.assign(module.exports, { listeningInodes, socketOwners, portOwners, mcpConflictMessage, installMcpPortHandling, signInRedeemUrl, finishSignIn, runningInstancePid });
+Object.assign(module.exports, { listeningInodes, socketOwners, portOwners, mcpConflictMessage, installMcpPortHandling });

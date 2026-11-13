@@ -1,6 +1,6 @@
 // Figma's Linux modules (apps/figma/linux): the fontconfig font list in the shape
-// of Figma's macOS addon, the variable-font reader, MCP port-conflict reporting
-// and the clipboard sign-in handoff. No Figma download or network needed.
+// of Figma's macOS addon, the variable-font reader, MCP port-conflict reporting,
+// and the sign-in scheme patches. No Figma download or network needed.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -227,59 +227,20 @@ test('setEnableMCP: EADDRINUSE is recorded, explained once and still rejected; a
   assert.deepEqual(invalid.seen, [3845]);
 });
 
-// --- sign-in --------------------------------------------------------------------
+// --- sign-in scheme ------------------------------------------------------------
 
-test('only a single-secret Figma app_auth redeem link is accepted from the clipboard', () => {
-  const secret = 'AbC123_-.~xyz9';
-  for (const ok of [`figma://app_auth/redeem?g_secret=${secret}`, `https://www.figma.com/app_auth/redeem?g_secret=${secret}`, `  figma://app_auth/redeem?g_secret=${secret}\n`]) {
-    assert.equal(hooks.signInRedeemUrl(ok), ok.trim(), ok);
-  }
-  for (const bad of [
-    '', 'hello', `figma://file/abc?g_secret=${secret}`, `https://evil.example/app_auth/redeem?g_secret=${secret}`,
-    `https://www.figma.com.evil.example/app_auth/redeem?g_secret=${secret}`, `http://www.figma.com/app_auth/redeem?g_secret=${secret}`,
-    `figma://app_auth/redeem?g_secret=${secret}&g_secret=x1234567`, 'figma://app_auth/redeem?g_secret=short', `figma://app_auth/redeem?g_secret=${secret}#x`,
-    `figma://app_auth/redeem?g_secret=${secret} --inspect`, `figma://u:p@app_auth/redeem?g_secret=${secret}`, `figma://app_auth/redeem?g_secret=${'a'.repeat(9000)}`,
-  ]) {
-    assert.equal(hooks.signInRedeemUrl(bad), null, bad.slice(0, 80));
-  }
-});
-
-test('--finish-sign-in forwards the link after "--" only to a running instance, and never echoes it', () => {
-  const url = 'figma://app_auth/redeem?g_secret=AbC123_-.~xyz9';
-  const run = ({ clipboard, running = 1234 }) => {
-    const said = [];
-    const exits = [];
-    const cleared = [];
-    const argv = ['/opt/electron', '--ozone-platform=wayland', '--enable-wayland-ime', '--finish-sign-in'];
-    const outcome = hooks.finishSignIn({
-      electron: { app: { getPath: () => '/tmp/appData', exit: (code) => exits.push(code) } },
-      argv, read: () => clipboard, running: () => running, say: (m) => said.push(m), clear: (v) => cleared.push(v),
-    });
-    return { outcome, argv, said, exits, cleared };
-  };
-  const ok = run({ clipboard: `${url}\n` });
-  assert.equal(ok.outcome, 'forwarded');
-  assert.deepEqual(ok.argv, ['/opt/electron', '--ozone-platform=wayland', '--enable-wayland-ime', '--', url]);
-  assert.deepEqual(ok.cleared, [url]);
-  assert.deepEqual(ok.exits, []);
-
-  const notRunning = run({ clipboard: url, running: null });
-  assert.equal(notRunning.outcome, 'failed');
-  assert.deepEqual(notRunning.exits, [1]);
-  assert.ok(!notRunning.argv.includes(url));
-
-  const wrong = run({ clipboard: 'my bank password' });
-  assert.equal(wrong.outcome, 'failed');
-  assert.ok(wrong.said.every((m) => !m.includes('password')));
-  assert.deepEqual(wrong.cleared, []);
-
-  assert.equal(hooks.finishSignIn({ electron: {}, argv: ['/opt/electron'] }), 'not-requested');
-});
-
-test('the running-instance check reads Chromium\'s singleton lock in Figma\'s lock directory', () => {
-  const appData = tmp('appdata');
-  assert.equal(hooks.runningInstancePid(appData), null);
-  fs.mkdirSync(path.join(appData, 'Figma/Desktop'), { recursive: true });
-  fs.symlinkSync(`host-${process.pid}`, path.join(appData, 'Figma/Desktop/SingletonLock'));
-  assert.equal(hooks.runningInstancePid(appData), process.pid);
+test('sign-in asks figma.com for figma-desktop:// and maps it like figma://; only that scheme is taken over', () => {
+  const config = require('../apps/figma/app.cjs');
+  const patch = (name) => config.patches.find((p) => p.name === name);
+  assert.match(patch('auth-scheme-request').to, /"desktop_protocol",process\.platform==="linux"\?"figma-desktop":N\.protocol/);
+  // The patched statement from main.js, run on its own.
+  const map = new Function('t', 'he', 'N', 'process', `${patch('auth-scheme-links').to}return t;`);
+  const he = new URL('https://www.figma.com/');
+  const linux = { platform: 'linux' };
+  assert.equal(map('figma-desktop://app_auth/redeem?g_secret=abc', he, { protocol: 'figma' }, linux), 'https://www.figma.com/app_auth/redeem?g_secret=abc');
+  assert.equal(map('figma://file/k', he, { protocol: 'figma' }, linux), 'https://www.figma.com/file/k');
+  assert.equal(map('figma-desktop://app_auth/redeem', he, { protocol: 'figma' }, { platform: 'darwin' }), 'figma-desktop://app_auth/redeem');
+  assert.equal(map('https://evil.example/figma-desktop://x', he, { protocol: 'figma' }, linux), 'https://evil.example/figma-desktop://x');
+  assert.deepEqual(config.install.defaultSchemes, ['figma-desktop']);
+  assert.ok(config.install.schemes.includes('figma-desktop'));
 });

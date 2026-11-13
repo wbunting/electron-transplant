@@ -50,16 +50,19 @@ buttons (the Windows layout). Mac-only behaviour is mostly gated on `se = darwin
   the next argument, so the desktop entry's `figma-desktop -- %u` dropped the URL.
 - **figma:// stays with figma-linux-next**: Figma calls `setAsDefaultProtocolClient`
   at every start (on Linux: `xdg-settings set default-url-scheme-handler`); the compat
-  entry declines it (`compat.defaultProtocolClient: false`), and the install registers
-  `figma` without `xdg-mime default` (`install.defaultHandler: false`).
-- **Sign-in** (`linux/hooks.cjs`): "Log in with browser" opens the browser; the browser
-  returns `figma://app_auth/redeem?g_secret=…`, which goes to the default handler
-  (figma-linux-next). Copy that link (the "Open Figma" button's link) and run
-  `figma-desktop --finish-sign-in` (or the launcher's *Finish browser sign-in* action):
-  it reads the clipboard, accepts only a single-secret `app_auth/redeem` link, and
-  hands it to the running instance through Figma's own single-instance handoff (never
-  a command line), then clears it from the clipboard. Figma redeems it only for the
-  sign-in it started.
+  entry declines it (`compat.defaultProtocolClient: false`), and the install lists
+  `figma` in the desktop entry without making it default (`install.defaultSchemes`).
+- **Sign-in** (`auth-scheme-request`, `auth-scheme-links`): "Log in with browser" opens
+  `https://www.figma.com/app_auth/<id>/grant?desktop_protocol=…`, and figma.com's
+  "Open the desktop app" button sends the browser to
+  `` `${desktop_protocol || "figma"}://app_auth/redeem?g_secret=…` `` (its auth
+  bundle; only VS Code/Cursor protocols are special-cased). On Linux the app asks for
+  `figma-desktop`, a scheme only it registers (and is the default for), and maps
+  `figma-desktop://…` onto `https://www.figma.com/…` exactly as Figma maps `figma://…`.
+  The link reaches the running app through Figma's own single-instance handoff, and
+  Figma redeems it only for the sign-in it started. Unverified: whether figma.com's
+  signed-in grant page restricts `desktop_protocol` (signed out, it passes any value
+  through its login redirect; Figma's own PR builds use arbitrary `figma-*` schemes).
 - **MCP** (`linux/hooks.cjs`): Figma's Dev Mode MCP server runs on Linux. The web app
   asks for port 3845; figma-linux-next serves its own MCP server there. Figma silently
   ignores `EADDRINUSE`; here it is recorded (`report`), and a dialog names the process
