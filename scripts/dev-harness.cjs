@@ -91,8 +91,15 @@ module.exports = (electron) => {
       await sleep(s.settle ?? 800);
     }
     if (s.eval) {
-      const target = s.at ? hit(win, ...s.at) : { contents: views(win).at(-1).contents };
+      // "in": the view whose URL contains this text (for views under a transparent overlay).
+      const target = s.in ? views(win).find((v) => v.contents.getURL().includes(s.in)) : s.at ? hit(win, ...s.at) : { contents: views(win).at(-1).contents };
+      if (!target) { log('no view matching', s.in); return; }
       log('eval', await target.contents.executeJavaScript(s.eval).catch((e) => `error: ${e.message}`));
+    }
+    if (s.main) {
+      // Main-process code (an async function body) given electron, win and views.
+      const AsyncFunction = (async () => {}).constructor;
+      log('main', await new AsyncFunction('electron', 'win', 'views', s.main)(electron, win, views).catch((e) => `error: ${e.message}`));
     }
     if (s.state) {
       log('state', { bounds: win.getContentBounds(), fullScreen: win.isFullScreen(), focused: win.isFocused(), views: views(win).map((v) => [v.name, v.bounds]) });

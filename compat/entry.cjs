@@ -56,6 +56,27 @@ if (env('COMPAT_FACADE') !== '0') {
   });
 }
 
+// Apps whose URL scheme another installed app handles (Figma: figma-linux-next owns
+// figma://) must not take it over at startup. On Linux, setAsDefaultProtocolClient
+// runs `xdg-settings set default-url-scheme-handler`. The desktop entry still
+// registers the scheme; <PREFIX>_DEFAULT_PROTOCOL_CLIENT=1 restores the call.
+if (config.defaultProtocolClient === false && env('DEFAULT_PROTOCOL_CLIENT') !== '1') {
+  electron.app.setAsDefaultProtocolClient = function setAsDefaultProtocolClient() {
+    recorder?.record({ kind: 'declined-call', api: 'app.setAsDefaultProtocolClient' });
+    return false;
+  };
+}
+
+// App-specific Linux behaviour (apps/<id>/, added to the app by the build).
+for (const hook of config.hooks ?? []) {
+  try {
+    require(path.join(appRoot, hook))({ electron, env, envPrefix: config.envPrefix, appRoot, record: (event) => recorder?.record(event) });
+  } catch (error) {
+    console.error(`electron-transplant: hook ${hook} failed:`, error?.message ?? error);
+    recorder?.record({ kind: 'hook-failed', api: hook, error: String(error?.message ?? error).slice(0, 240) }, error?.stack);
+  }
+}
+
 const main = path.join(appRoot, pkg.originalMain);
 if (pkg.type === 'module' || main.endsWith('.mjs')) {
   // ES main (may use top-level await): load it the way Electron would.

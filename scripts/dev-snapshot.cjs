@@ -37,6 +37,9 @@ async function main(argv) {
   const env = { ...process.env, ET_DEV_SCRIPT: path.join(outDir, 'script.json'), ET_DEV_SCALE: scale, ELECTRON_IS_DEV: '0', ELECTRON_FORCE_IS_PACKAGED: 'true' };
   delete env.ELECTRON_RUN_AS_NODE;
   for (const key of Object.keys(env)) if (key.endsWith('_COMPAT_LOG')) delete env[key];
+  // Some apps (Figma) choose their profile from appData, ignoring --user-data-dir.
+  env.XDG_CONFIG_HOME = path.join(outDir, 'config');
+  fs.mkdirSync(env.XDG_CONFIG_HOME, { recursive: true, mode: 0o700 });
   const prefix = JSON.parse(fs.readFileSync(path.join(app, 'linux-compat/config.json'), 'utf8')).envPrefix;
   env[`${prefix}_COMPAT_LOG`] = path.join(outDir, 'events.jsonl');
   let status = 0;
