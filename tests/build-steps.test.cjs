@@ -126,12 +126,12 @@ test('the compat entry replaces main, keeps the original, and names the desktop 
   assert.deepEqual([pkg.main, pkg.originalMain, pkg.desktopName], ['./linux-compat/entry.cjs', './out/main.js', 'demo-desktop.desktop']);
   for (const name of COMPAT_FILES) assert.ok(fs.existsSync(path.join(appDir, 'linux-compat', name)), name);
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(appDir, 'linux-compat/config.json'))), {
-    appId: 'demo', envPrefix: 'DEMO', platformApis: 'electron-44.9.1-platform-apis.json', pageAdapter: { origins: ['https://demo.app'] },
+    appId: 'demo', envPrefix: 'DEMO', platformApis: 'electron-44.9.1-platform-apis.json', pageAdapter: { origins: ['https://demo.app'] }, hooks: [], defaultProtocolClient: true,
   });
 });
 
 test('every bundled app config is valid and its shims exist', () => {
-  assert.deepEqual(listApps(), ['linear', 'notion']);
+  assert.deepEqual(listApps(), ['figma', 'linear', 'notion']);
   for (const id of listApps()) {
     const { config } = loadApp(id);
     assert.equal(config.id, id);

@@ -6,7 +6,7 @@ every platform, so an app's code can move from its macOS Electron onto the offic
 This tool handles that part per app and adds a compatibility layer for macOS-only
 behaviour (currently: traffic-light window buttons).
 
-Rootless, x86_64; built on Arch/Hyprland (Wayland, HiDPI). Apps: **Linear**, **Notion**.
+Rootless, x86_64; built on Arch/Hyprland (Wayland, HiDPI). Apps: **Linear**, **Notion**, **Figma**.
 
 ```sh
 cd ~/.local/src/electron-transplant
@@ -32,8 +32,10 @@ there. An existing `icon-theme.cache` in that directory is also regenerated for 
 | --- | --- | --- | --- |
 | Linear 1.32.8 (Electron 44.9.1) | `linear-desktop` | `linear` | 3 trackpad addons → shims |
 | Notion 7.43.0 (Electron 45.1.0) | `notion-desktop` | `notion`, `notion-agents` | `better-sqlite3` → official Node-API prebuild; 3 others stubbed/trimmed |
+| Figma 126.11.9 (Electron 44.11.2) | `figma-desktop` | `figma` (registered, **not** default) | none loaded on Linux (Figma's own JS path); fonts → fontconfig module |
 
-(`linear` and `notion` are the CLIs, hence `-desktop`.)
+(`linear` and `notion` are the CLIs, hence `-desktop`; `figma-desktop` sits beside
+figma-linux-next, which stays the `figma://` handler. See `apps/figma/NATIVE.md`.)
 
 ## Pipeline (`lib/build.cjs`)
 
@@ -50,7 +52,9 @@ there. An existing `icon-theme.cache` in that directory is also regenerated for 
    the pins are the trust anchor.
 3. **Native code**: each module in the config is `shim`med (JS file), `stub`bed
    (generated: records the call, throws), `remove`d (when the module has its own Linux
-   path) or replaced by an `npm-prebuild` from its integrity-pinned npm tarball. Then
+   path) or replaced by an `npm-prebuild` from its integrity-pinned npm tarball.
+   Addons outside packages (`nativeFiles`, e.g. Figma's `bindings.node`) can only be
+   removed, with a reason. App-specific Linux code is copied in with `addFiles`. Then
    *every* file in the app and resources is scanned: any Mach-O, Windows or
    non-x86-64 ELF binary fails the build.
 4. **Patch**: exact-match source patches, each with an expected match count, so a
@@ -62,6 +66,10 @@ there. An existing `icon-theme.cache` in that directory is also regenerated for 
    minus Mac-only files, derived resources (e.g. Notion's Linux tray icons from its
    menu-bar template icon), icon from `CFBundleIconFile`, and `TRANSPLANT.json`
    recording what was done.
+
+Extraction tolerates one kind of malformed archive: invalid placeholder entries an
+app names in `asar.dropInvalidEntries` (Figma's `/.codesign`, size −1000) are left out
+via a sanitised copy; the integrity check hashes the header as stored.
 
 ## Compatibility layer (`compat/`, runs in the app's main process)
 
@@ -85,6 +93,13 @@ there. An existing `icon-theme.cache` in that directory is also regenerated for 
   (client-side-decorated) windows; `<PREFIX>_FRAMELESS=1` opts out.
   The overlay models each Electron button frame as 14×16 with a 12px circle, 20px apart
   (pre-Tahoe macOS). That is unverified against a real Mac.
+- **Protocol client guard** (`compat.defaultProtocolClient: false`): the app's
+  `app.setAsDefaultProtocolClient` is recorded and declined (on Linux it runs
+  `xdg-settings`), for schemes another installed app keeps. `install.defaultHandler:
+  false` likewise registers the scheme in the desktop entry without `xdg-mime default`.
+  `<PREFIX>_DEFAULT_PROTOCOL_CLIENT=1` restores the call.
+- **Hooks** (`compat.hooks`): app files (from `addFiles`) the entry loads before the
+  app's main, given `electron`, the env reader and the recorder.
 - **Page adapter** (`title-bar-page-adapter.cjs`, opt-in per app): for apps whose
   *remote* web UI only makes room for the buttons on macOS (Linear checks
   `navigator.platform`), it pads the title-bar row clear of the buttons and centres
@@ -98,13 +113,23 @@ there. An existing `icon-theme.cache` in that directory is also regenerated for 
 | `<PREFIX>_COMPAT_LOG=FILE` | recorder log (default `~/.local/state/electron-transplant/<app>/compat-events.jsonl`) |
 | `<PREFIX>_COMPAT_FACADE=0` | debugging only: no facade |
 
+Figma only (`apps/figma/NATIVE.md`):
+
+| Variable | Effect |
+| --- | --- |
+| `FIGMA_DESKTOP_MCP_PORT=N` | serve Figma's MCP server on N instead of 3845 (figma-linux-next uses 3845) |
+| `FIGMA_DESKTOP_FRAMELESS=1` | frameless main window |
+| `figma-desktop --finish-sign-in` | pass a copied `figma://app_auth/redeem…` link to the running app (also a launcher action) |
+
 Launchers pass no sandbox-disabling switches (Chromium uses its user-namespace
 sandbox), which Linear refuses to start with anyway.
 
 ## Adding an app
 
-1. Put its DMG in `~/Downloads`, copy an `apps/<id>/app.cjs`, set `id`, `name`,
-   `bundleId`, `envPrefix`, `dmg`, `install`.
+1. Put its DMG in `~/Downloads` (or its own subdirectory, `dmg.dir`, to keep the
+   untrusted download apart), copy an `apps/<id>/app.cjs`, set `id`, `name`,
+   `bundleId`, `envPrefix`, `dmg`, `install` (`install.name` for the launcher name,
+   `install.actions` for desktop actions).
 2. `electron-transplant inspect <id>` lists its native code (handled or not), Mach-O
    resources, how it loads Electron, macOS window-chrome calls, platform checks and
    whether configured patches match.
@@ -115,9 +140,11 @@ sandbox), which Linear refuses to start with anyway.
 ## Checking a build without touching the desktop
 
 `scripts/dev-snapshot.cjs RUNTIME OUT STEPS.json [-- APP_ARGS]` runs a throwaway copy
-of a built runtime under Electron's headless platform with a throwaway profile and a
-step script (`bounds`, `wait`, `focus`, `hover`, `click`, `eval`, `state`, `snapshot`),
-compositing every view into PNGs. Headless Electron ignores fullscreen.
+of a built runtime under Electron's headless platform with a throwaway profile
+(`--user-data-dir` and `XDG_CONFIG_HOME`, for apps like Figma that pick their own) and a
+step script (`bounds`, `wait`, `focus`, `hover`, `click`, `eval` (`at` or `in`: a
+view by URL), `main` (main-process code), `state`, `snapshot`),
+compositing every view into PNGs. Headless Electron ignores fullscreen, and native dialogs crash it.
 `ET_SMOKE=1 npm test` does a headless launch of every built app.
 
 ## Tests
@@ -125,5 +152,5 @@ compositing every view into PNGs. Headless Electron ignores fullscreen.
 `npm test`: unit tests; real-Electron tests (recorder unchanged-behaviour on 44.9.1 and
 45.1.0, facade via `require`/`electron/main`/`import`/ES main, traffic lights and page
 adapter, glyph centring at 1×/1.5×/2×); install/launcher; and a full build of every
-app whose pinned DMG is in `~/Downloads`. Electron tests skip when the pinned zip
+app whose pinned DMG is in its download directory. Electron tests skip when the pinned zip
 isn't cached (`~/.cache/electron-transplant`).

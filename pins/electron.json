@@ -3,6 +3,10 @@
     "electron-v44.9.1-linux-x64.zip": "994bc3664cc3ac55b50c21a58d345cf8322003d37f5439a81801e3267e6145e2",
     "electron.d.ts": "79e1d84e36ed6af6177277aee1aba2b6d34107a4ac03af494dc5ca3dc84c92e8"
   },
+  "44.11.2": {
+    "electron-v44.11.2-linux-x64.zip": "910cf4abd910e065c9b3685e9c00d61f9fef1a74bab440bde3fa0de86331f103",
+    "electron.d.ts": "e02cc08de885a97fd077bfd3ca44477334c294af85be064457280240e4845e9d"
+  },
   "45.1.0": {
     "electron-v45.1.0-linux-x64.zip": "9dafab2c57ce209f8f716f8f3e4fddd8ffe0820e2455bfbbfc00b0fc13e03a3b",
     "electron.d.ts": "3786adb8a0e97b3e9e03bb09788bf87d7f4f9205705638558d53ed6763a63f67"

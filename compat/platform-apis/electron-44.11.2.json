@@ -1,0 +1,2117 @@
+{
+ "electron": "44.11.2",
+ "generatedFrom": "electron.d.ts",
+ "mainExports": [
+  {
+   "name": "app",
+   "type": "App",
+   "kind": "instance"
+  },
+  {
+   "name": "autoUpdater",
+   "type": "AutoUpdater",
+   "kind": "instance"
+  },
+  {
+   "name": "BaseWindow",
+   "type": "BaseWindow",
+   "kind": "class"
+  },
+  {
+   "name": "BrowserView",
+   "type": "BrowserView",
+   "kind": "class"
+  },
+  {
+   "name": "BrowserWindow",
+   "type": "BrowserWindow",
+   "kind": "class"
+  },
+  {
+   "name": "clipboard",
+   "type": "Clipboard",
+   "kind": "instance"
+  },
+  {
+   "name": "ClipboardItem",
+   "type": "ClipboardItem",
+   "kind": "class"
+  },
+  {
+   "name": "contentTracing",
+   "type": "ContentTracing",
+   "kind": "instance"
+  },
+  {
+   "name": "desktopCapturer",
+   "type": "DesktopCapturer",
+   "kind": "instance"
+  },
+  {
+   "name": "dialog",
+   "type": "Dialog",
+   "kind": "instance"
+  },
+  {
+   "name": "globalShortcut",
+   "type": "GlobalShortcut",
+   "kind": "instance"
+  },
+  {
+   "name": "ImageView",
+   "type": "ImageView",
+   "kind": "class"
+  },
+  {
+   "name": "inAppPurchase",
+   "type": "InAppPurchase",
+   "kind": "instance"
+  },
+  {
+   "name": "ipcMain",
+   "type": "IpcMain",
+   "kind": "instance"
+  },
+  {
+   "name": "IpcMainServiceWorker",
+   "type": "IpcMainServiceWorker",
+   "kind": "class"
+  },
+  {
+   "name": "Menu",
+   "type": "Menu",
+   "kind": "class"
+  },
+  {
+   "name": "MenuItem",
+   "type": "MenuItem",
+   "kind": "class"
+  },
+  {
+   "name": "MessageChannelMain",
+   "type": "MessageChannelMain",
+   "kind": "class"
+  },
+  {
+   "name": "nativeTheme",
+   "type": "NativeTheme",
+   "kind": "instance"
+  },
+  {
+   "name": "net",
+   "type": "Net",
+   "kind": "instance"
+  },
+  {
+   "name": "netLog",
+   "type": "NetLog",
+   "kind": "instance"
+  },
+  {
+   "name": "Notification",
+   "type": "Notification",
+   "kind": "class"
+  },
+  {
+   "name": "powerMonitor",
+   "type": "PowerMonitor",
+   "kind": "instance"
+  },
+  {
+   "name": "powerSaveBlocker",
+   "type": "PowerSaveBlocker",
+   "kind": "instance"
+  },
+  {
+   "name": "protocol",
+   "type": "Protocol",
+   "kind": "instance"
+  },
+  {
+   "name": "pushNotifications",
+   "type": "PushNotifications",
+   "kind": "instance"
+  },
+  {
+   "name": "safeStorage",
+   "type": "SafeStorage",
+   "kind": "instance"
+  },
+  {
+   "name": "screen",
+   "type": "Screen",
+   "kind": "instance"
+  },
+  {
+   "name": "session",
+   "type": "Session",
+   "kind": "constructor"
+  },
+  {
+   "name": "ShareMenu",
+   "type": "ShareMenu",
+   "kind": "class"
+  },
+  {
+   "name": "systemPreferences",
+   "type": "SystemPreferences",
+   "kind": "instance"
+  },
+  {
+   "name": "TouchBar",
+   "type": "TouchBar",
+   "kind": "class"
+  },
+  {
+   "name": "Tray",
+   "type": "Tray",
+   "kind": "class"
+  },
+  {
+   "name": "utilityProcess",
+   "type": "UtilityProcess",
+   "kind": "constructor"
+  },
+  {
+   "name": "View",
+   "type": "View",
+   "kind": "class"
+  },
+  {
+   "name": "webContents",
+   "type": "WebContents",
+   "kind": "constructor"
+  },
+  {
+   "name": "WebContentsView",
+   "type": "WebContentsView",
+   "kind": "class"
+  },
+  {
+   "name": "webFrameMain",
+   "type": "WebFrameMain",
+   "kind": "constructor"
+  },
+  {
+   "name": "WebSocket",
+   "type": "WebSocket",
+   "kind": "class"
+  }
+ ],
+ "members": {
+  "App": {
+   "addRecentDocument": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "clearRecentDocuments": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "configureWebAuthn": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "getAccessibilitySupportFeatures": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "getBadgeCount": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "getCurrentActivityType": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "getJumpListSettings": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "getLoginItemSettings": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "getRecentDocuments": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "hide": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "invalidateCurrentActivity": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isAccessibilitySupportEnabled": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "isActive": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isHidden": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isInApplicationsFolder": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isSecureKeyboardEntryEnabled": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "moveToApplicationsFolder": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "removeAsDefaultProtocolClient": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "resignCurrentActivity": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setAccessibilitySupportEnabled": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setAccessibilitySupportFeatures": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setActivationPolicy": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setAppUserModelId": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setJumpList": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setLoginItemSettings": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setSecureKeyboardEntryEnabled": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setToastActivatorCLSID": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setUserActivity": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setUserTasks": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "show": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "showEmojiPanel": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "startAccessingSecurityScopedResource": {
+    "platforms": [
+     "mas"
+    ]
+   },
+   "startAppShimServer": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "stopAppShimServer": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "updateCurrentActivity": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "accessibilitySupportEnabled": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "dock": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "runningUnderARM64Translation": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "toastActivatorCLSID": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "BaseWindow": {
+   "addTabbedWindow": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "closeFilePreview": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "getAccentColor": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "getRepresentedFilename": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "getWindowButtonPosition": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "hookWindowMessage": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "invalidateShadow": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isClosable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "isContentProtected": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "isDocumentEdited": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isFocusable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "isHiddenInMissionControl": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isMaximizable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "isMinimizable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "isMovable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "isSimpleFullScreen": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isSnapped": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "isTabletMode": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "isWindowMessageHooked": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "mergeAllWindows": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "moveTabToNewWindow": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "previewFile": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "selectNextTab": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "selectPreviousTab": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setAccentColor": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setAppDetails": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setAutoHideCursor": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setBackgroundMaterial": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setClosable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setContentProtection": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setDocumentEdited": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setFocusable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setHiddenInMissionControl": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setMaximizable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setMinimizable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setMovable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setOpacity": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setOverlayIcon": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setRepresentedFilename": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setSheetOffset": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setSimpleFullScreen": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setSkipTaskbar": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setThumbarButtons": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setThumbnailClip": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setThumbnailToolTip": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setTouchBar": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setVibrancy": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setWindowButtonPosition": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setWindowButtonVisibility": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "showAllTabs": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "toggleTabBar": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "unhookAllWindowMessages": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "unhookWindowMessage": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "closable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "documentEdited": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "excludedFromShownWindowsMenu": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "focusable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "maximizable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "minimizable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "movable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "representedFilename": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "snapped": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "tabbingIdentifier": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "BaseWindowConstructorOptions": {
+   "accentColor": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "acceptFirstMouse": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "appShim": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "backgroundMaterial": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "closable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "enableLargerThanScreen": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "hiddenInMissionControl": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "maximizable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "minimizable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "movable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "opacity": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "simpleFullscreen": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "skipTaskbar": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "tabbingIdentifier": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "thickFrame": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "trafficLightPosition": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "vibrancy": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "visualEffectState": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "zoomToPageWidth": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "BrowserWindow": {
+   "addTabbedWindow": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "closeFilePreview": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "getAccentColor": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "getRepresentedFilename": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "getWindowButtonPosition": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "hookWindowMessage": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "invalidateShadow": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isClosable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "isContentProtected": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "isDocumentEdited": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isFocusable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "isHiddenInMissionControl": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isMaximizable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "isMinimizable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "isMovable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "isSimpleFullScreen": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isSnapped": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "isTabletMode": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "isWindowMessageHooked": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "mergeAllWindows": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "moveTabToNewWindow": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "previewFile": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "selectNextTab": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "selectPreviousTab": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setAccentColor": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setAppDetails": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setAutoHideCursor": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setBackgroundMaterial": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setClosable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setContentProtection": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setDocumentEdited": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setFocusable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setHiddenInMissionControl": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setMaximizable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setMinimizable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setMovable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setOverlayIcon": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setRepresentedFilename": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setSheetOffset": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setSimpleFullScreen": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setSkipTaskbar": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "setThumbarButtons": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setThumbnailClip": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setThumbnailToolTip": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setTouchBar": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setVibrancy": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setWindowButtonPosition": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setWindowButtonVisibility": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "showAllTabs": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "showDefinitionForSelection": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "toggleTabBar": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "unhookAllWindowMessages": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "unhookWindowMessage": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "closable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "documentEdited": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "excludedFromShownWindowsMenu": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "focusable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "maximizable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "minimizable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "movable": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "representedFilename": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "snapped": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "tabbingIdentifier": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "Dialog": {
+   "showCertificateTrustDialog": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   }
+  },
+  "Dock": {
+   "bounce": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "cancelBounce": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "downloadFinished": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "getBadge": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "getMenu": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "hide": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isVisible": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setBadge": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setIcon": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setMenu": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "show": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "MemoryInfo": {
+   "privateBytes": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "Menu": {
+   "sendActionToFirstResponder": {
+    "platforms": [
+     "darwin"
+    ],
+    "static": true
+   },
+   "setHighlightColors": {
+    "platforms": [
+     "win32"
+    ],
+    "static": true
+   }
+  },
+  "MenuItem": {
+   "accessibilityLabel": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "badge": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "sharingItem": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "toolTip": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "userAccelerator": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "NativeImage": {
+   "createFromNamedImage": {
+    "platforms": [
+     "darwin"
+    ],
+    "static": true
+   },
+   "createMenuSymbol": {
+    "platforms": [
+     "darwin"
+    ],
+    "static": true
+   },
+   "createThumbnailFromPath": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ],
+    "static": true
+   },
+   "getNativeHandle": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isMacTemplateImage": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "NativeTheme": {
+   "inForcedColorsMode": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "shouldDifferentiateWithoutColor": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "shouldUseDarkColorsForSystemIntegratedUI": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "shouldUseHighContrastColors": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "shouldUseInvertedColorScheme": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   }
+  },
+  "Notification": {
+   "getHistory": {
+    "platforms": [
+     "darwin"
+    ],
+    "static": true
+   },
+   "handleActivation": {
+    "platforms": [
+     "win32"
+    ],
+    "static": true
+   },
+   "remove": {
+    "platforms": [
+     "darwin"
+    ],
+    "static": true
+   },
+   "removeAll": {
+    "platforms": [
+     "darwin"
+    ],
+    "static": true
+   },
+   "removeGroup": {
+    "platforms": [
+     "darwin"
+    ],
+    "static": true
+   },
+   "groupId": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "groupTitle": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "id": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "toastXml": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "NotificationAction": {
+   "items": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "PowerMonitor": {
+   "getCurrentThermalState": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "ProcessMetric": {
+   "integrityLevel": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "sandboxed": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   }
+  },
+  "PushNotifications": {
+   "registerForAPNSNotifications": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "unregisterForAPNSNotifications": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "Screen": {
+   "dipToScreenRect": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "screenToDipRect": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "SerialPort": {
+   "deviceInstanceId": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "usbDriverName": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "SharedTextureHandle": {
+   "ioSurface": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "ntHandle": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "Shell": {
+   "readShortcutLink": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "writeShortcutLink": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "SystemPreferences": {
+   "askForMediaAccess": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "canPromptTouchID": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "getColor": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "getEffectiveAppearance": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "getMediaAccessStatus": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "getSystemColor": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "getUserDefault": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isSwipeTrackingFromScrollEventsEnabled": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "isTrustedAccessibilityClient": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "postLocalNotification": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "postNotification": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "postWorkspaceNotification": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "promptTouchID": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "registerDefaults": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "removeUserDefault": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setUserDefault": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "subscribeLocalNotification": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "subscribeNotification": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "subscribeWorkspaceNotification": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "unsubscribeLocalNotification": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "unsubscribeNotification": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "unsubscribeWorkspaceNotification": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "accessibilityDisplayShouldReduceTransparency": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "effectiveAppearance": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "Tray": {
+   "closeContextMenu": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "displayBalloon": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "focus": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "getBounds": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "getGUID": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "getIgnoreDoubleClickEvents": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "getTitle": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "popUpContextMenu": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "removeBalloon": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "setIgnoreDoubleClickEvents": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setPressedImage": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "setTitle": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "WebContents": {
+   "showDefinitionForSelection": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "WebPreferences": {
+   "scrollBounce": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "WebviewTag": {
+   "showDefinitionForSelection": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "AboutPanelOptionsOptions": {
+   "version": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "credits": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   }
+  },
+  "Details": {
+   "systemErrorCode": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "FeedURLOptions": {
+   "headers": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "serverType": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "allowAnyVersion": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "FocusOptions": {
+   "steal": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "ForkOptions": {
+   "allowLoadingUnsignedLibraries": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "disclaim": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "IgnoreMouseEventsOptions": {
+   "forward": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   }
+  },
+  "LoginItemSettings": {
+   "wasOpenedAtLogin": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "status": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "executableWillLaunchAtLogin": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "LoginItemSettingsOptions": {
+   "type": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "serviceName": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "path": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "args": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "MenuItemConstructorOptions": {
+   "sublabel": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "toolTip": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "acceleratorWorksWhenHidden": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "sharingItem": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "badge": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "MessageBoxOptions": {
+   "textWidth": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "MessageBoxSyncOptions": {
+   "textWidth": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "NotificationActionEventParams": {
+   "selectionIndex": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "NotificationConstructorOptions": {
+   "id": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "groupId": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "groupTitle": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "subtitle": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "hasReply": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "replyPlaceholder": {
+    "platforms": [
+     "darwin",
+     "win32"
+    ]
+   },
+   "sound": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "closeButtonText": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "toastXml": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "OpenDialogOptions": {
+   "message": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "securityScopedBookmarks": {
+    "platforms": [
+     "darwin",
+     "mas"
+    ]
+   }
+  },
+  "OpenDialogReturnValue": {
+   "bookmarks": {
+    "platforms": [
+     "darwin",
+     "mas"
+    ]
+   }
+  },
+  "OpenDialogSyncOptions": {
+   "message": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "securityScopedBookmarks": {
+    "platforms": [
+     "darwin",
+     "mas"
+    ]
+   }
+  },
+  "OpenExternalOptions": {
+   "activate": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "workingDirectory": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "logUsage": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "PopupOptions": {
+   "positioningItem": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "ProgressBarOptions": {
+   "mode": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "SaveDialogOptions": {
+   "message": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "nameFieldLabel": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "showsTagField": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "securityScopedBookmarks": {
+    "platforms": [
+     "darwin",
+     "mas"
+    ]
+   }
+  },
+  "SaveDialogReturnValue": {
+   "bookmark": {
+    "platforms": [
+     "darwin",
+     "mas"
+    ]
+   }
+  },
+  "SaveDialogSyncOptions": {
+   "message": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "nameFieldLabel": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "showsTagField": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "securityScopedBookmarks": {
+    "platforms": [
+     "darwin",
+     "mas"
+    ]
+   }
+  },
+  "Settings": {
+   "type": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "serviceName": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "path": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "args": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "enabled": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "name": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  },
+  "SystemMemoryInfo": {
+   "fileBacked": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "purgeable": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "VisibleOnAllWorkspacesOptions": {
+   "visibleOnFullScreen": {
+    "platforms": [
+     "darwin"
+    ]
+   },
+   "skipTransformProcessType": {
+    "platforms": [
+     "darwin"
+    ]
+   }
+  },
+  "LaunchItems": {
+   "name": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "path": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "args": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "scope": {
+    "platforms": [
+     "win32"
+    ]
+   },
+   "enabled": {
+    "platforms": [
+     "win32"
+    ]
+   }
+  }
+ }
+}
