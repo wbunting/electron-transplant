@@ -286,6 +286,50 @@ function observeIpcHandlers(ipcMain, recorder) {
   ipcMain.handle = wrapped;
 }
 
+// Child processes that die abnormally: renderers, the GPU process and utility
+// processes (an app's own Node workers, e.g. Figma's font worker). Native crashes
+// there never reach JavaScript. Shutdown kills are not failures, so events after
+// will-quit are skipped.
+function observeChildProcesses(app, recorder) {
+  if (typeof app?.on !== 'function') return;
+  let quitting = false;
+  app.on('will-quit', () => { quitting = true; });
+  const describe = (details) => `${details?.reason ?? 'unknown'}${details?.exitCode != null ? ` (exit code ${details.exitCode})` : ''}`;
+  app.on('child-process-gone', (_event, details) => {
+    if (quitting || details?.reason === 'clean-exit') return;
+    const name = [details?.type, details?.name].filter(Boolean).join(': ') || 'unknown';
+    recorder.record({ kind: 'child-process-gone', api: name, error: describe(details), frames: [] });
+  });
+  // Renderers are reported here, not through child-process-gone. No URL is kept.
+  app.on('render-process-gone', (_event, _contents, details) => {
+    if (quitting || details?.reason === 'clean-exit') return;
+    recorder.record({ kind: 'child-process-gone', api: 'Renderer', error: describe(details), frames: [] });
+  });
+}
+
+// A session-end event on every clean exit, so a session without one ended in a
+// native crash, a SIGKILL or a power loss (`report` lists those). app.exit() skips
+// process 'exit', so it is wrapped (behaviour unchanged).
+function observeSessionEnd(app, recorder, proc) {
+  let ended = false;
+  const end = (how, code) => {
+    if (ended) return;
+    ended = true;
+    recorder.flush();
+    recorder.write({ time: recorder.now(), kind: 'session-end', pid: proc.pid, how, code: Number.isInteger(code) ? code : undefined });
+  };
+  proc.on?.('exit', (code) => end('exit', code));
+  const exit = app?.exit;
+  if (typeof exit === 'function' && !exit[RECORDER]) {
+    const wrapped = function (...args) {
+      end('app.exit', args[0] ?? 0);
+      return exit.apply(this, args);
+    };
+    wrapped[RECORDER] = exit;
+    app.exit = wrapped;
+  }
+}
+
 function install({ electron, table, appRoot, proc = process, childProcess = require('node:child_process'), logPath, meta = {} }) {
   if (globalThis[RECORDER]) return globalThis[RECORDER];
   const recorder = new Recorder({ logPath, appRoot });
@@ -298,9 +342,18 @@ function install({ electron, table, appRoot, proc = process, childProcess = requ
   proc.on?.('uncaughtExceptionMonitor', (error, origin) => {
     recorder.record({ kind: 'uncaught', api: origin, error: scrub(`${error?.name ?? 'Error'}: ${error?.message ?? error}`) }, error?.stack);
   });
-  proc.on?.('exit', () => recorder.flush());
-  recorder.write({ time: recorder.now(), kind: 'session', pid: proc.pid, observed, ...meta });
+  observeChildProcesses(electron.app, recorder);
+  observeSessionEnd(electron.app, recorder, proc);
+  // endMarker: this session writes session-end on a clean exit.
+  recorder.write({ time: recorder.now(), kind: 'session', pid: proc.pid, observed, endMarker: true, ...meta });
+  // Where Crashpad writes minidumps for native crashes (apps may move userData
+  // before ready, so read it then).
+  electron.app?.whenReady?.().then(() => {
+    let dir;
+    try { dir = electron.app.getPath('crashDumps'); } catch { return; }
+    recorder.write({ time: recorder.now(), kind: 'session-info', pid: proc.pid, crashDumps: dir.split(os.homedir()).join('~') });
+  }, () => {});
   return recorder;
 }
 
-module.exports = { install, Recorder, observeMissing, observeTagged, observeElectron, observeNativeLoads, observeSpawns, observeIpcHandlers, spawnedCommand, scrub, defaultLogPath, RECORDER };
+module.exports = { install, Recorder, observeMissing, observeTagged, observeElectron, observeNativeLoads, observeSpawns, observeIpcHandlers, observeChildProcesses, observeSessionEnd, spawnedCommand, scrub, defaultLogPath, RECORDER };

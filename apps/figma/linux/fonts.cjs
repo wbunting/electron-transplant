@@ -163,9 +163,29 @@ let lastFonts = null;
 let lastScanAt = 0;
 
 function scan() {
+  const started = Date.now();
   lastFonts = listFonts();
-  lastScanAt = Math.floor(Date.now() / 1000);
+  lastScanAt = Math.floor(started / 1000);
+  // Evidence in the launcher log that fonts reached Figma (counts only, no paths).
+  const faces = Object.values(lastFonts).reduce((n, entries) => n + entries.length, 0);
+  console.log(`figma-desktop fonts: ${Object.keys(lastFonts).length} files, ${faces} faces from fontconfig in ${Date.now() - started} ms (${process.type === 'utility' ? 'font worker' : 'main process'})`);
   return lastFonts;
+}
+
+// Failures: recorded when running in the main process (the compat recorder lives
+// there), always logged. In Figma's font worker a throw ends the worker, which the
+// recorder sees as child-process-gone; Figma then retries in the main process.
+function reported(name, fn) {
+  return function (...args) {
+    try {
+      return fn.apply(this, args);
+    } catch (error) {
+      const message = String(error?.message ?? error).split('\n')[0].split(os.homedir()).join('~').slice(0, 240);
+      console.error(`figma-desktop fonts: ${name} failed: ${message}`);
+      globalThis[Symbol.for('electron-transplant.recorder')]?.record({ kind: 'linux-impl-error', api: `figma fonts.${name}`, error: message }, error?.stack);
+      throw error;
+    }
+  };
 }
 
 function fontDirs() {
@@ -175,22 +195,20 @@ function fontDirs() {
 }
 
 module.exports = {
-  getFonts() {
-    return JSON.stringify(scan());
-  },
+  getFonts: reported('getFonts', () => JSON.stringify(scan())),
   // Latest change to any font directory (seconds), so Figma knows when to ask
   // for getModifiedFonts. Stable while fonts don't change (not the scan time,
   // which would make every poll look like a change).
-  getFontsModifiedAt() {
+  getFontsModifiedAt: reported('getFontsModifiedAt', () => {
     if (!lastFonts) scan();
     let latest = 0;
     for (const dir of fontDirs()) {
       try { latest = Math.max(latest, Math.floor(fs.statSync(dir).mtimeMs / 1000)); } catch {}
     }
     return latest;
-  },
+  }),
   // Fonts added or changed since the previous scan.
-  getModifiedFonts() {
+  getModifiedFonts: reported('getModifiedFonts', () => {
     const since = lastScanAt;
     const fonts = scan();
     const changed = {};
@@ -198,7 +216,7 @@ module.exports = {
       if (entries.some((entry) => entry.modified_at >= since)) changed[file] = entries;
     }
     return JSON.stringify(changed);
-  },
+  }),
   // On macOS this renders an SVG sample with the bundled figma_agent; Figma's own
   // Linux stub returns "" too, and the font menu then shows plain names.
   getFontPreview() {

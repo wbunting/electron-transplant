@@ -244,3 +244,29 @@ test('sign-in asks figma.com for figma-desktop:// and maps it like figma://; onl
   assert.deepEqual(config.install.defaultSchemes, ['figma-desktop']);
   assert.ok(config.install.schemes.includes('figma-desktop'));
 });
+
+test('a font listing failure is recorded (main process) and still reaches Figma as an error', (t) => {
+  const events = [];
+  const RECORDER = Symbol.for('electron-transplant.recorder');
+  const saved = { path: process.env.PATH, recorder: globalThis[RECORDER] };
+  globalThis[RECORDER] = { record: (event) => events.push(event) };
+  process.env.PATH = '/nonexistent';
+  t.mock.method(console, 'error', () => {});
+  try {
+    // A fresh copy: the module caches its last scan.
+    const fresh = path.join(tmp('fresh'), 'fonts.cjs');
+    fs.copyFileSync(require.resolve('../apps/figma/linux/fonts.cjs'), fresh);
+    fs.copyFileSync(require.resolve('../apps/figma/linux/sfnt.cjs'), path.join(path.dirname(fresh), 'sfnt.cjs'));
+    assert.throws(() => require(fresh).getFonts(), /ENOENT/);
+    assert.deepEqual(events.map((e) => [e.kind, e.api]), [['linux-impl-error', 'figma fonts.getFonts']]);
+    assert.ok(!events[0].error.includes(os.homedir()));
+  } finally {
+    process.env.PATH = saved.path;
+    if (saved.recorder === undefined) delete globalThis[RECORDER]; else globalThis[RECORDER] = saved.recorder;
+  }
+});
+
+test('the tab bar menu button gets a menu on Linux', () => {
+  const patch = require('../apps/figma/app.cjs').patches.find((p) => p.name === 'app-menu-button-on-linux');
+  assert.match(patch.to, /\(process\.platform==="win32"\|\|process\.platform==="linux"\)&&\(this\.windowsAppMenu=/);
+});

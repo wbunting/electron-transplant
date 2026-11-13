@@ -69,6 +69,26 @@ buttons (the Windows layout). Mac-only behaviour is mostly gated on `se = darwin
   holding the port and how to resolve it. `FIGMA_DESKTOP_MCP_PORT=<port>` serves on
   another port so both can run (MCP clients then use `http://127.0.0.1:<port>/mcp`).
 
+- **App menu button** (`app-menu-button-on-linux`): the tab bar's menu button pops up
+  a menu Figma only built on Windows; on Linux it threw `reading 'popup'` (caught live
+  by the recorder as an uncaught exception) and did nothing.
+
+## Evidence that the Linux side works
+
+- No native code from the DMG runs: the build fails on any Mach-O, and a running
+  instance maps no `.node` file at all (`/proc/<pid>/maps` across all processes);
+  the only binaries are the official Linux Electron's.
+- Fonts: Figma's only `utilityProcess.fork` is the font worker
+  (`bindings_worker.js`), which on Linux is only reached through the patches. Each
+  scan logs `figma-desktop fonts: N files, M faces … (font worker)` to
+  `~/.cache/figma-desktop/launcher.log` (counts only).
+- Failures are recorded (`electron-transplant report figma`): a worker that dies is
+  `child-process-gone` (Figma starts a new one and retries in the main process), a
+  font failure in the main process is `linux-impl-error`, main-process JS errors are
+  `uncaught`, and a native main-process crash shows as a session without a clean
+  exit plus a Crashpad minidump (under `~/.config/Figma/DesktopProfile/v44/Crashpad`).
+  Figma's crash reporter also tries to upload those to Figma.
+
 ## Mac-only APIs still hit (`electron-transplant report figma`)
 
 All harmless reads with Linux fallbacks: `app.runningUnderARM64Translation` (×3 call

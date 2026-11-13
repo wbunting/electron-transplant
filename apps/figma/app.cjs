@@ -113,6 +113,15 @@ module.exports = {
       to: 'show:!1,autoHideMenuBar:process.platform==="linux",frame:process.platform==="linux"&&process.env.FIGMA_DESKTOP_FRAMELESS!=="1",titleBarStyle:process.platform==="linux"&&process.env.FIGMA_DESKTOP_FRAMELESS!=="1"?void 0:"hidden",...se&&{trafficLightPosition:',
     },
     {
+      // The tab bar's menu button (Figma's non-macOS layout) pops up a menu that
+      // Figma only builds on Windows; on Linux it threw "reading 'popup'" and did
+      // nothing. Build it on Linux too (same template as Windows).
+      name: 'app-menu-button-on-linux',
+      file: MAIN,
+      from: 'rebuildWindowsAppMenu(e,r){process.platform==="win32"&&(this.windowsAppMenu=',
+      to: 'rebuildWindowsAppMenu(e,r){(process.platform==="win32"||process.platform==="linux")&&(this.windowsAppMenu=',
+    },
+    {
       // Figma's Linux argv parser treats a flag without "=" as taking the next
       // argument, so `figma-desktop -- figma://...` (the desktop entry's Exec)
       // lost the URL. "--" now ends the flags.

@@ -77,8 +77,12 @@ via a sanitised copy; the integrity check hashes the header as stored.
   macOS/Windows-only Electron members (listed per Electron version from its own
   `@platform` typings), calls to platform-tagged no-ops, failed native loads (with
   binary format), spawns of missing executables (`/usr/sbin/screencapture`…), throwing
-  IPC handlers and uncaught errors, with stack frames into the app's bundle. Arguments,
-  URLs and the home path are never logged. `electron-transplant report <app>`.
+  IPC handlers and uncaught errors, with stack frames into the app's bundle; child
+  processes that die (renderers, GPU, utility processes such as an app's Node
+  workers); and how each session ended. A session with no clean-exit record ended in
+  a native crash, SIGKILL or power loss, and `report` lists it with any Crashpad
+  minidumps in the app's `crashDumps` directory. Arguments, URLs and the home path are
+  never logged. `electron-transplant report <app>`.
 - **Facade** (`facade.cjs`): Electron's exports are read-only getters, so the app's own
   files get a modified `electron` module instead: `require('electron')` and
   `require('electron/main')` through `Module._load`, ES `import` through
