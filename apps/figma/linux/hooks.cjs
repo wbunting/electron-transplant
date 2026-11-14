@@ -13,7 +13,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const MCP_CHANNEL = 'web:setEnableMCP';
-const FINISH_SIGN_IN = '--finish-sign-in';
 
 // --- MCP port -----------------------------------------------------------------
 
