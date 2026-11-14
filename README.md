@@ -8,6 +8,11 @@ behaviour (currently: traffic-light window buttons).
 
 Rootless, x86_64; built on Arch/Hyprland (Wayland, HiDPI). Apps: **Linear**, **Notion**, **Figma**, **Superhuman**.
 
+No app code is in this repository or produced for distribution: you supply the
+vendor's own macOS DMG, and the build runs on your machine. Not affiliated with
+or endorsed by Linear, Notion, Figma or Superhuman; their names are trademarks
+of their owners. Use of each app remains subject to its own terms.
+
 ```sh
 cd ~/.local/src/electron-transplant
 npm ci --ignore-scripts && npm test
@@ -182,3 +187,7 @@ compositing every view into PNGs. Headless Electron ignores fullscreen, and nati
 adapter, glyph centring at 1×/1.5×/2×); install/launcher; and a full build of every
 app whose pinned DMG is in its download directory. Electron tests skip when the pinned zip
 isn't cached (`~/.cache/electron-transplant`).
+
+## License
+
+MIT (`LICENSE`). This covers this repository's code only, not the apps it adapts.

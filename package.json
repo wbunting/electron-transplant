@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Run macOS Electron apps on Linux Electron, with a compatibility layer for Mac-only APIs",
+  "license": "MIT",
   "engines": { "node": ">=22.15.0" },
   "bin": { "electron-transplant": "bin/electron-transplant" },
   "scripts": {
