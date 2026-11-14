@@ -45,7 +45,7 @@ test('install lays out a versioned runtime, launcher, icon and desktop entry wit
   assert.match(desktop, /^StartupWMClass=notion-desktop$/m);
   assert.match(desktop, new RegExp(`^Icon=${path.join(prefix, 'share/icons/hicolor/512x512/apps/notion-desktop.png').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'm'));
   assert.match(desktop, /^MimeType=x-scheme-handler\/notion;x-scheme-handler\/notion-agents;$/m);
-  assert.match(desktop, new RegExp(`^Exec="${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/bin/notion-desktop" -- %u$`, 'm'));
+  assert.ok(desktop.split('\n').includes(`Exec=${prefix}/bin/notion-desktop -- %u`), desktop);
 
   // A new build becomes current; the old runtime stays for rollback.
   fs.writeFileSync(path.join(runtime, 'resources/app.asar'), 'asar v2');
@@ -73,6 +73,8 @@ test('the launcher uses Wayland when available, forwards the URL last and passes
 test('desktop entries quote Exec per the spec and stay on one line per key', () => {
   const entry = desktopEntry({ ...notion, name: 'No\ntion', install: { ...notion.install, comment: 'a\nb' } }, '/home/a "b"/$x', []);
   assert.match(entry, /^Exec="\/home\/a \\"b\\"\/\\\$x\/bin\/notion-desktop" -- %u$/m);
+  // A plain path stays unquoted, so xdg-utils' generic backend can find the program.
+  assert.match(desktopEntry(notion, '/home/a/.local', []), /^Exec=\/home\/a\/.local\/bin\/notion-desktop -- %u$/m);
   assert.match(entry, /^Name=No tion$/m);
   assert.doesNotMatch(entry, /MimeType/);
 });

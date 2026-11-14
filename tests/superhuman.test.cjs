@@ -143,7 +143,7 @@ echo "ICON=\${ET_APP_ICON-unset}" >> "$HOME/argv"
 
     const entry = fs.readFileSync(path.join(prefix, 'share/applications/superhuman-desktop-finish-login.desktop'), 'utf8');
     assert.match(entry, /^Name=Superhuman Desktop — Finish browser sign-in$/m);
-    assert.match(entry, new RegExp(`^Exec="${command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}" --notify$`, 'm'));
+    assert.ok(entry.split('\n').includes(`Exec=${command} --notify`), entry);
     assert.doesNotMatch(entry, /MimeType/);
   } finally {
     fs.rmSync(prefix, { recursive: true, force: true });
