@@ -1,0 +1,31 @@
+name: test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # Pinned Electron builds, verified against pins/electron.json on every run.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/electron-transplant
+          key: electron-${{ hashFiles('pins/electron.json') }}
+      - run: npm ci --ignore-scripts
+      - run: npm run fetch-electron
+      # Ubuntu 24.04 blocks unprivileged user namespaces, which Chromium's sandbox
+      # uses; the real-Electron tests launch headless Electron with its sandbox on.
+      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      # The per-app DMG builds skip here: vendors' DMGs are never in CI.
+      - run: npm test

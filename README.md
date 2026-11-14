@@ -6,15 +6,47 @@ every platform, so an app's code can move from its macOS Electron onto the offic
 This tool handles that part per app and adds a compatibility layer for macOS-only
 behaviour (currently: traffic-light window buttons).
 
-Rootless, x86_64; built on Arch/Hyprland (Wayland, HiDPI). Apps: **Linear**, **Notion**, **Figma**, **Superhuman**.
+Apps: **Linear**, **Notion**, **Figma**, **Superhuman**. Rootless; Linux x86_64 only.
 
 No app code is in this repository or produced for distribution: you supply the
 vendor's own macOS DMG, and the build runs on your machine. Not affiliated with
 or endorsed by Linear, Notion, Figma or Superhuman; their names are trademarks
 of their owners. Use of each app remains subject to its own terms.
 
+## Requirements
+
+- Linux on x86_64, Wayland or X11.
+- Node.js 22.15 or newer, npm, Python 3, `unzip`.
+- 7-Zip to read the DMG (`7zz` or `7z`; the `7zip` package on most distributions).
+  On Arch without it, the build fetches Arch's package rootlessly and checks its
+  signature with `pacman-key`. `SEVENZIP=/path/to/7z` picks a specific binary.
+- For the desktop entries: `xdg-utils` and `desktop-file-utils` (usually present).
+
+Tested on Arch Linux with Hyprland (Wayland, 2× HiDPI) and Vicinae. Other desktops
+and distributions should work but are untested; reports are welcome.
+On desktops that draw their own title bars, see `<PREFIX>_FRAMELESS` below.
+
+## Getting the apps
+
+Download each app's **macOS** DMG from its vendor: the Intel or universal build,
+which are the ones pinned.
+
+| App | Download | Put it in |
+| --- | --- | --- |
+| Linear | https://linear.app/download | `~/Downloads/` |
+| Notion | https://www.notion.com/desktop | `~/Downloads/` |
+| Figma | https://www.figma.com/downloads/ (Intel) | `~/Downloads/figma-desktop-mac/` |
+| Superhuman | https://superhuman.com/download | `~/Downloads/superhuman-mac/` |
+
+Or pass `--dmg PATH`. Each build checks the DMG against a pinned SHA-256
+(`pins` in `apps/<app>/app.cjs`). A newer vendor release isn't pinned yet: see
+[CONTRIBUTING.md](CONTRIBUTING.md#updating-an-app-to-a-new-version).
+
+## Usage
+
 ```sh
-cd ~/.local/src/electron-transplant
+git clone https://github.com/wbunting/electron-transplant
+cd electron-transplant
 npm ci --ignore-scripts && npm test
 ln -s "$PWD/bin/electron-transplant" ~/.local/bin/    # optional
 
@@ -186,7 +218,8 @@ compositing every view into PNGs. Headless Electron ignores fullscreen, and nati
 45.1.0, facade via `require`/`electron/main`/`import`/ES main, traffic lights and page
 adapter, glyph centring at 1×/1.5×/2×); install/launcher; and a full build of every
 app whose pinned DMG is in its download directory. Electron tests skip when the pinned zip
-isn't cached (`~/.cache/electron-transplant`).
+isn't cached (`~/.cache/electron-transplant`); `npm run fetch-electron` downloads and
+verifies every pinned version. CI runs everything except the DMG builds.
 
 ## License
 
