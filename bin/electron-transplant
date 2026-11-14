@@ -64,7 +64,7 @@ async function main(argv) {
         return;
       }
       const prefix = path.resolve(args.prefix ?? path.join(os.homedir(), '.local'));
-      require(path.join(ROOT, 'lib/install.cjs')).install({ config, runtime: result.runtime, prefix });
+      require(path.join(ROOT, 'lib/install.cjs')).install({ config, configDir: dir, runtime: result.runtime, prefix });
       console.log(`Quit and reopen ${config.name} to use the new build.`);
       return;
     }
