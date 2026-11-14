@@ -131,7 +131,7 @@ test('the compat entry replaces main, keeps the original, and names the desktop 
 });
 
 test('every bundled app config is valid and its shims exist', () => {
-  assert.deepEqual(listApps(), ['figma', 'linear', 'notion']);
+  assert.deepEqual(listApps(), ['figma', 'linear', 'notion', 'superhuman']);
   for (const id of listApps()) {
     const { config } = loadApp(id);
     assert.equal(config.id, id);

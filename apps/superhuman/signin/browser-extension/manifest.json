@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Superhuman Linux Login",
+  "version": "0.1.0",
+  "description": "Return Superhuman desktop sign-ins from the browser to the unofficial Linux app.",
+  "content_scripts": [{
+    "matches": ["https://mail.superhuman.com/~login*"],
+    "js": ["callback.js", "content.js"],
+    "run_at": "document_start",
+    "all_frames": false
+  }]
+}

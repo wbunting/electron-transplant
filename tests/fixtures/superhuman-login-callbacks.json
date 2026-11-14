@@ -1,0 +1,97 @@
+[
+  {
+    "name": "Google, exact bytes and terminal marker",
+    "url": "https://mail.superhuman.com/~login#authuser=1&code=SYNTHETIC%2Ftest%2Bcode&state=native-login%3Aprompt%3Dconsent%26provider%3Dgoogle%26loginUuid%3Dsynthetic-test-uuid&v=2#app",
+    "valid": true
+  },
+  {
+    "name": "Microsoft and trailing slash",
+    "url": "https://mail.superhuman.com/~login/#code=SYNTHETIC&state=native-login%3Aprovider%3Dmicrosoft%26loginUuid%3Dtest",
+    "valid": true
+  },
+  {
+    "name": "Callback on hash change without terminal marker",
+    "url": "https://mail.superhuman.com/~login#code=SYNTHETIC&state=native-login%3Aprovider%3Dgoogle%26loginUuid%3Dtest",
+    "valid": true
+  },
+  {
+    "name": "Ordinary web login",
+    "url": "https://mail.superhuman.com/~login#code=SYNTHETIC&state=web-login",
+    "valid": false
+  },
+  {
+    "name": "Lookalike host",
+    "url": "https://mail.superhuman.com.evil.example/~login#code=x&state=native-login%3Aprovider%3Dgoogle%26loginUuid%3Dtest",
+    "valid": false
+  },
+  {
+    "name": "Unencrypted callback",
+    "url": "http://mail.superhuman.com/~login#code=x&state=native-login%3Aprovider%3Dgoogle%26loginUuid%3Dtest",
+    "valid": false
+  },
+  {
+    "name": "Wrong path",
+    "url": "https://mail.superhuman.com/~login-extra#code=x&state=native-login%3Aprovider%3Dgoogle%26loginUuid%3Dtest",
+    "valid": false
+  },
+  {
+    "name": "Credentials in authority",
+    "url": "https://user:pass@mail.superhuman.com/~login#code=x&state=native-login%3Aprovider%3Dgoogle%26loginUuid%3Dtest",
+    "valid": false
+  },
+  {
+    "name": "Missing code",
+    "url": "https://mail.superhuman.com/~login#state=native-login%3Aprovider%3Dgoogle%26loginUuid%3Dtest",
+    "valid": false
+  },
+  {
+    "name": "Blank code",
+    "url": "https://mail.superhuman.com/~login#code=&state=native-login%3Aprovider%3Dgoogle%26loginUuid%3Dtest",
+    "valid": false
+  },
+  {
+    "name": "Duplicate code",
+    "url": "https://mail.superhuman.com/~login#code=x&code=y&state=native-login%3Aprovider%3Dgoogle%26loginUuid%3Dtest",
+    "valid": false
+  },
+  {
+    "name": "Duplicate state",
+    "url": "https://mail.superhuman.com/~login#code=x&state=&state=native-login%3Aprovider%3Dgoogle%26loginUuid%3Dtest",
+    "valid": false
+  },
+  {
+    "name": "Missing login identity",
+    "url": "https://mail.superhuman.com/~login#code=x&state=native-login%3Aprovider%3Dgoogle",
+    "valid": false
+  },
+  {
+    "name": "Duplicate provider",
+    "url": "https://mail.superhuman.com/~login#code=x&state=native-login%3Aprovider%3Dgoogle%26provider%3Dmicrosoft%26loginUuid%3Dtest",
+    "valid": false
+  },
+  {
+    "name": "Duplicate identity",
+    "url": "https://mail.superhuman.com/~login#code=x&state=native-login%3Aprovider%3Dgoogle%26loginUuid%3Da%26loginUuid%3Db",
+    "valid": false
+  },
+  {
+    "name": "Unsupported provider",
+    "url": "https://mail.superhuman.com/~login#code=x&state=native-login%3Aprovider%3Devil%26loginUuid%3Dtest",
+    "valid": false
+  },
+  {
+    "name": "Invalid percent encoding",
+    "url": "https://mail.superhuman.com/~login#code=%XX&state=native-login%3Aprovider%3Dgoogle%26loginUuid%3Dtest",
+    "valid": false
+  },
+  {
+    "name": "Encoded control in code",
+    "url": "https://mail.superhuman.com/~login#code=%0A&state=native-login%3Aprovider%3Dgoogle%26loginUuid%3Dtest",
+    "valid": false
+  },
+  {
+    "name": "Trailing fragment junk",
+    "url": "https://mail.superhuman.com/~login#code=x&state=native-login%3Aprovider%3Dgoogle%26loginUuid%3Dtest#unexpected",
+    "valid": false
+  }
+]

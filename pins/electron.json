@@ -10,5 +10,9 @@
   "45.1.0": {
     "electron-v45.1.0-linux-x64.zip": "9dafab2c57ce209f8f716f8f3e4fddd8ffe0820e2455bfbbfc00b0fc13e03a3b",
     "electron.d.ts": "3786adb8a0e97b3e9e03bb09788bf87d7f4f9205705638558d53ed6763a63f67"
+  },
+  "45.2.3": {
+    "electron-v45.2.3-linux-x64.zip": "a87fe741f6d121285117e574da6c9a2e65210d410123bbc04713b099add0263b",
+    "electron.d.ts": "75ae6a481aaf885ef07a1c9f3afe299db7bc5cb99cbb6995cad1b8c63c4ee4ca"
   }
 }

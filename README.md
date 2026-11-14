@@ -6,7 +6,7 @@ every platform, so an app's code can move from its macOS Electron onto the offic
 This tool handles that part per app and adds a compatibility layer for macOS-only
 behaviour (currently: traffic-light window buttons).
 
-Rootless, x86_64; built on Arch/Hyprland (Wayland, HiDPI). Apps: **Linear**, **Notion**, **Figma**.
+Rootless, x86_64; built on Arch/Hyprland (Wayland, HiDPI). Apps: **Linear**, **Notion**, **Figma**, **Superhuman**.
 
 ```sh
 cd ~/.local/src/electron-transplant
@@ -33,9 +33,30 @@ there. An existing `icon-theme.cache` in that directory is also regenerated for 
 | Linear 1.32.8 (Electron 44.9.1) | `linear-desktop` | `linear` | 3 trackpad addons → shims |
 | Notion 7.43.0 (Electron 45.1.0) | `notion-desktop` | `notion`, `notion-agents` | `better-sqlite3` → official Node-API prebuild; 3 others stubbed/trimmed |
 | Figma 126.11.9 (Electron 44.11.2) | `figma-desktop` | `figma-desktop`; `figma` registered, **not** default | none loaded on Linux (Figma's own JS path); fonts → fontconfig module |
+| Superhuman 1045.0.0 (Electron 45.2.3) | `superhuman-desktop` | `superhuman`; `mailto` registered, **not** default | none |
 
 (`linear` and `notion` are the CLIs, hence `-desktop`; `figma-desktop` sits beside
-figma-linux-next, which stays the `figma://` handler. See `apps/figma/NATIVE.md`.)
+figma-linux-next, which stays the `figma://` handler. See `apps/figma/NATIVE.md`.
+`superhuman-desktop` can sit beside the Windows-build `superhuman-linux` port.)
+
+### Superhuman sign-in
+
+Superhuman's sign-in opens in your browser and should end by handing the result
+back to the app. Superhuman's page only does that for Windows and macOS browsers;
+on Linux it says "login attempt expired". Two ways through (`apps/superhuman/signin/`):
+
+- **Browser extension** (Chromium-based browsers, one-time): `chrome://extensions` →
+  Developer mode → Load unpacked → `~/.local/share/superhuman-desktop/browser-extension`.
+  Sign-in then returns to the app on its own. See its README.
+- **Without it:** copy the URL of the browser tab that says "expired", then run
+  **Superhuman Desktop — Finish browser sign-in** from your launcher
+  (`superhuman-desktop-finish-login`). It forwards that URL to the app and clears the
+  clipboard. Needs wl-clipboard (Wayland) or xclip/xsel (X11).
+
+Both accept only Superhuman's own HTTPS callback carrying a native-app code and one
+Google or Microsoft login, and change nothing in it: the app still checks it against
+the sign-in it started. Superhuman claims `superhuman://` each time it starts, so
+with two Superhuman ports installed, sign in with the one opened last.
 
 ## Pipeline (`lib/build.cjs`)
 
@@ -133,7 +154,10 @@ sandbox), which Linear refuses to start with anyway.
 1. Put its DMG in `~/Downloads` (or its own subdirectory, `dmg.dir`, to keep the
    untrusted download apart), copy an `apps/<id>/app.cjs`, set `id`, `name`,
    `bundleId`, `envPrefix`, `dmg`, `install` (`install.name` for the launcher name,
-   `install.schemes`/`install.defaultSchemes` for extra and default URL schemes).
+   `install.schemes`/`install.defaultSchemes` for extra and default URL schemes,
+   `install.share` for files that need a fixed path under `~/.local/share/<install.id>`,
+   and `install.helpers` for commands that run a script from it with the app's
+   Electron as Node, each with its own desktop entry; see `apps/superhuman/app.cjs`).
 2. `electron-transplant inspect <id>` lists its native code (handled or not), Mach-O
    resources, how it loads Electron, macOS window-chrome calls, platform checks and
    whether configured patches match.
