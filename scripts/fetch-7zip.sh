@@ -5,7 +5,11 @@
 set -euo pipefail
 cache="${XDG_CACHE_HOME:-$HOME/.cache}/electron-transplant/tools"
 for command in pacman pacman-key bsdtar curl; do
-  command -v "$command" >/dev/null || { echo "Missing dependency: $command (install 7zip another way and set SEVENZIP)" >&2; exit 1; }
+  command -v "$command" >/dev/null || {
+    echo "No 7-Zip found. Install your distribution's 7zip package (it provides 7zz or 7z), or set SEVENZIP=/path/to/7z." >&2
+    echo "(The rootless fallback only works on Arch: it needs $command.)" >&2
+    exit 1
+  }
 done
 version=$(LC_ALL=C pacman -Si extra/7zip | awk -F': ' '/^Version/ {print $2; exit}')
 [[ -n "$version" ]] || { echo 'Could not resolve the extra/7zip version from the local sync database.' >&2; exit 1; }

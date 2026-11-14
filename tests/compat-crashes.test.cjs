@@ -9,7 +9,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { skipUnlessElectron, probeRuntime, readEvents } = require('./support/probe-app.cjs');
-const { summarise, crashDumps } = require('../lib/report.cjs');
+const { summarise, crashDumps, report } = require('../lib/report.cjs');
 
 const VERSION = '44.11.2';
 
@@ -100,5 +100,19 @@ test('report: legacy sessions are "unknown", live ones "running"; dumps are list
   fs.writeFileSync(path.join(home, 'Crashpad/settings.dat'), '');
   const result = crashDumps([{ crashDumps: '~/Crashpad' }], home);
   assert.deepEqual(result.dumps.map((d) => d.file), ['completed/b.dmp', 'completed/a.dmp']);
+  fs.rmSync(home, { recursive: true, force: true });
+});
+
+test('report output shows the home directory as ~ (it gets pasted into issues)', () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'et-home-'));
+  const log = path.join(home, '.local/state/electron-transplant/app/compat-events.jsonl');
+  const printed = [];
+  report(log, { home, out: (line) => printed.push(line) });
+  fs.mkdirSync(path.dirname(log), { recursive: true });
+  fs.writeFileSync(log, JSON.stringify({ kind: 'session', pid: 1, time: 't1', runtime: 'r' }) + '\n');
+  report(log, { home, out: (line) => printed.push(line), isRunning: () => false });
+  assert.ok(!printed.join('\n').includes(home), printed.join('\n'));
+  assert.match(printed[0], /~\/\.local\/state\/electron-transplant\/app\/compat-events\.jsonl/);
+  assert.equal(printed[1], '~/.local/state/electron-transplant/app/compat-events.jsonl');
   fs.rmSync(home, { recursive: true, force: true });
 });
