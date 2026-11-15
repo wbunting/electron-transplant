@@ -1,6 +1,6 @@
 {
   "name": "electron-transplant",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Run macOS Electron apps on Linux Electron, with a compatibility layer for Mac-only APIs",
   "license": "MIT",

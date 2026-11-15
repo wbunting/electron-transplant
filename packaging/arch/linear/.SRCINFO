@@ -55,7 +55,7 @@ pkgbase = linear-transplant
 	options = !debug
 	source = Linear-1.32.8-universal.dmg::https://releases.linear.app/Linear-1.32.8-universal.dmg
 	source = electron-v44.9.1-linux-x64.zip::https://github.com/electron/electron/releases/download/v44.9.1/electron-v44.9.1-linux-x64.zip
-	source = electron-transplant::git+https://github.com/wbunting/electron-transplant.git#tag=v0.2.0
+	source = electron-transplant::git+https://github.com/wbunting/electron-transplant.git#tag=v0.2.1
 	source = @electron+asar-4.3.1.tgz::https://registry.npmjs.org/@electron/asar/-/asar-4.3.1.tgz
 	source = balanced-match-4.0.4.tgz::https://registry.npmjs.org/balanced-match/-/balanced-match-4.0.4.tgz
 	source = brace-expansion-5.0.13.tgz::https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.13.tgz

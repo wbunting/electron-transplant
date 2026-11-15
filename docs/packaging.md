@@ -394,7 +394,7 @@ name is still free (`https://aur.archlinux.org/rpc/v5/info?arg[]=linear-transpla
 then:
 
 ```sh
-electron-transplant pkgbuild linear --commit "$(git rev-parse v0.2.0^{commit})" \
+electron-transplant pkgbuild linear --commit "$(git rev-parse v0.2.1^{commit})" \
   --maintainer 'Name <email>' --out /tmp/aur-linear
 cd /tmp/aur-linear && makepkg -s && namcap PKGBUILD *.pkg.tar.zst
 git clone ssh://aur@aur.archlinux.org/linear-transplant.git && cp PKGBUILD .SRCINFO linear-transplant/

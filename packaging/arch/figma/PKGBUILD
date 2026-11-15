@@ -38,8 +38,8 @@ source=(
   'Figma-126.11.9.dmg::https://desktop.figma.com/mac/Figma-126.11.9.dmg'
   # Electron 44.11.2 for Linux
   'electron-v44.11.2-linux-x64.zip::https://github.com/electron/electron/releases/download/v44.11.2/electron-v44.11.2-linux-x64.zip'
-  # electron-transplant at tag v0.2.0
-  'electron-transplant::git+https://github.com/wbunting/electron-transplant.git#tag=v0.2.0'
+  # electron-transplant at tag v0.2.1
+  'electron-transplant::git+https://github.com/wbunting/electron-transplant.git#tag=v0.2.1'
   # package-lock.json: @electron/asar and its dependencies
   '@electron+asar-4.3.1.tgz::https://registry.npmjs.org/@electron/asar/-/asar-4.3.1.tgz'
   'balanced-match-4.0.4.tgz::https://registry.npmjs.org/balanced-match/-/balanced-match-4.0.4.tgz'

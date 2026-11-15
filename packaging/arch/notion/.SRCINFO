@@ -57,7 +57,7 @@ pkgbase = notion-transplant
 	source = Notion-7.43.0-universal.dmg::https://desktop-release.notion-static.com/Notion-7.43.0-universal.dmg
 	source = electron-v45.1.0-linux-x64.zip::https://github.com/electron/electron/releases/download/v45.1.0/electron-v45.1.0-linux-x64.zip
 	source = better-sqlite3-13.0.1.tgz::https://registry.npmjs.org/better-sqlite3/-/better-sqlite3-13.0.1.tgz
-	source = electron-transplant::git+https://github.com/wbunting/electron-transplant.git#tag=v0.2.0
+	source = electron-transplant::git+https://github.com/wbunting/electron-transplant.git#tag=v0.2.1
 	source = @electron+asar-4.3.1.tgz::https://registry.npmjs.org/@electron/asar/-/asar-4.3.1.tgz
 	source = balanced-match-4.0.4.tgz::https://registry.npmjs.org/balanced-match/-/balanced-match-4.0.4.tgz
 	source = brace-expansion-5.0.13.tgz::https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.13.tgz

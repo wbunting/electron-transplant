@@ -35,8 +35,8 @@ source=(
   'Superhuman-1045.0.0-latest.dmg::https://storage.googleapis.com/download.superhuman.com/native-update/Superhuman-1045.0.0-latest.dmg'
   # Electron 45.2.3 for Linux
   'electron-v45.2.3-linux-x64.zip::https://github.com/electron/electron/releases/download/v45.2.3/electron-v45.2.3-linux-x64.zip'
-  # electron-transplant at tag v0.2.0
-  'electron-transplant::git+https://github.com/wbunting/electron-transplant.git#tag=v0.2.0'
+  # electron-transplant at tag v0.2.1
+  'electron-transplant::git+https://github.com/wbunting/electron-transplant.git#tag=v0.2.1'
   # package-lock.json: @electron/asar and its dependencies
   '@electron+asar-4.3.1.tgz::https://registry.npmjs.org/@electron/asar/-/asar-4.3.1.tgz'
   'balanced-match-4.0.4.tgz::https://registry.npmjs.org/balanced-match/-/balanced-match-4.0.4.tgz'
