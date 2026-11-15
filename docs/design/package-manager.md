@@ -1,6 +1,32 @@
 # Design: electron-transplant as a small package manager
 
-Status: proposal, for review. Nothing here is implemented yet.
+Status: partly implemented. The rest is still a proposal.
+
+## Where this stands (v0.2.1)
+
+Shipped:
+
+- **`source` in every recipe** (download page, feed URL, DMG URL per pin, allowed
+  hosts, how long old versions stay downloadable) and **`sources.json`**, which
+  lists every input with its URL and SHA-256 ([packaging.md](../packaging.md)).
+  No `teamId` yet.
+- **`fetch <app>`** for pinned versions: HTTPS only, redirects kept on the
+  recipe's hosts, into the download cache described below. `build` and `inspect`
+  look there. No `--latest`.
+- **Distribution packages** instead of the phase 4 AUR package: PKGBUILDs in
+  `packaging/arch/` and a Nix flake, both building from the vendor's DMG on the
+  user's machine. Nothing is published to the AUR.
+
+Not built yet:
+
+- Reading the feeds, and `outdated`.
+- Phase 2: the per-file asar check and Apple signature verification, and so
+  `--latest` and the vendor-signed tier.
+- `install`, `list`, `update`, `remove` and `rollback` as user commands. The name
+  `install` is taken by `install <app> --from BUILD_DIR`, which installs an
+  existing build; the proposed `install <app>` would extend it.
+- The scheduled check for feeds moving past the newest pin, and Windows
+  installers.
 
 Goal: `electron-transplant install linear` downloads the vendor's macOS build,
 verifies it, builds it and installs it, with `list`, `outdated`, `update` and
@@ -148,7 +174,8 @@ Nothing in it is ever executed; 7-Zip only reads it.
 
 1. Is the vendor-signed tier acceptable, behind `--latest` and labelled untested?
    The alternative is pins only, with `outdated` just reporting newer versions.
-2. Download cache under `~/.cache/electron-transplant/downloads` (proposed) or
-   `~/Downloads/<dir>` as today?
+2. ~~Download cache under `~/.cache/electron-transplant/downloads` (proposed) or
+   `~/Downloads/<dir>` as today?~~ Decided: the cache, as proposed. `build` and
+   `inspect` still find DMGs in `~/Downloads` too.
 3. Should `outdated`/`update` run a check for recipe updates (a `git fetch` of the
    checkout), or leave that to the user?
