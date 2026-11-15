@@ -40,6 +40,17 @@ test('install lays out a versioned runtime, launcher, icon and desktop entry wit
   const base = path.join(prefix, 'opt/notion-desktop');
   assert.equal(fs.readlinkSync(path.join(base, 'current')), first.id);
   assert.ok(fs.statSync(path.join(base, first.id, 'electron')).mode & 0o100);
+
+  // A runtime with shared-writable modes (as Electron 45.1.0's zip unpacks) is installed without them.
+  fs.chmodSync(path.join(runtime, 'electron'), 0o777);
+  fs.chmodSync(path.join(runtime, 'resources'), 0o777);
+  fs.writeFileSync(path.join(runtime, 'resources/app.asar'), 'asar shared');
+  fs.chmodSync(path.join(runtime, 'resources/app.asar'), 0o666);
+  const shared = install({ config: notion, runtime, prefix, log: () => {} });
+  for (const file of ['', 'electron', 'resources', 'resources/app.asar']) assert.equal(fs.statSync(path.join(base, shared.id, file)).mode & 0o022, 0, file || '.');
+  assert.equal(fs.statSync(path.join(base, shared.id, 'electron')).mode & 0o777, 0o755);
+  fs.chmodSync(path.join(runtime, 'electron'), 0o755);
+  fs.chmodSync(path.join(runtime, 'resources'), 0o755);
   assert.ok(fs.existsSync(path.join(prefix, 'share/icons/hicolor/512x512/apps/notion-desktop.png')));
   const desktop = fs.readFileSync(path.join(prefix, 'share/applications/notion-desktop.desktop'), 'utf8');
   assert.match(desktop, /^StartupWMClass=notion-desktop$/m);
