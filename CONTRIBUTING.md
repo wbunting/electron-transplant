@@ -43,7 +43,10 @@ Vendors ship often, so this is the most common change.
    - for a new Electron version, add its hashes to `pins/electron.json` and commit
      `compat/platform-apis/electron-<version>.json` from
      `~/.cache/electron-transplant/platform-apis/`;
-   - `npm run sources` to regenerate `sources.json` (packagers read it).
+   - `npm run sources` to regenerate `sources.json` (packagers read it), bump
+     `package.json`'s version and run `electron-transplant pkgbuild --write` to
+     regenerate the PKGBUILDs in `packaging/arch/` (they pin the release tag
+     `v<version>`, created once the change is merged; docs/packaging.md).
 7. `npm test`, then open a pull request saying what you checked and what you didn't.
 
 ## Adding an app
@@ -68,7 +71,8 @@ Each app lives in `apps/<id>/` with an `app.cjs` and whatever shims, notes
 3. Handle each native module and resource; read the bundle around its `darwin`
    window-chrome checks and add patches where its Linux branch should look like macOS.
 4. `build <id> --accept-unpinned`, check it (see "Updating an app" above, step 5), then add the printed hashes
-   and run `npm run sources`.
+   and run `npm run sources` and `electron-transplant pkgbuild --write` (and set
+   `install.conflicts` to any distribution packages that install the same files).
 
 [docs/how-it-works.md](docs/how-it-works.md) describes what the pipeline and
 compatibility layer do with each config option, and how to check a build headless
