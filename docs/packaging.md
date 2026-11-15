@@ -23,6 +23,7 @@ checkout. Read it as plain JSON (Nix: `builtins.fromJSON (builtins.readFile
     "linear": {
       "name": "Linear",              // vendor's app name
       "bundleId": "com.linear",
+      "envPrefix": "LINEAR",         // <PREFIX> of the app's environment variables
       "installId": "linear-desktop", // directory, desktop file and icon name
       "command": "linear-desktop",   // launcher in <prefix>/bin
       "displayName": "Linear",       // desktop entry Name=

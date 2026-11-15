@@ -62,7 +62,7 @@ test('sources.json has every field the Nix packages read, with the types they ex
     assert.match(input.file, /^[A-Za-z0-9+_?=-][A-Za-z0-9+._?=-]*$/, `${what}.file`);
   };
   for (const [id, app] of Object.entries(doc.apps)) {
-    for (const key of ['name', 'installId', 'command', 'displayName', 'comment']) str(app[key], `${id}.${key}`);
+    for (const key of ['name', 'envPrefix', 'installId', 'command', 'displayName', 'comment']) str(app[key], `${id}.${key}`);
     strOrNull(app.downloadPage, `${id}.downloadPage`);
     assert.ok(Array.isArray(app.helpers), `${id}.helpers`);
     for (const pin of app.pins) {

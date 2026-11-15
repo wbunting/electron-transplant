@@ -5,6 +5,7 @@
     "figma": {
       "name": "Figma",
       "bundleId": "com.figma.Desktop",
+      "envPrefix": "FIGMA_DESKTOP",
       "installId": "figma-desktop",
       "command": "figma-desktop",
       "displayName": "Figma Desktop",
@@ -39,6 +40,7 @@
     "linear": {
       "name": "Linear",
       "bundleId": "com.linear",
+      "envPrefix": "LINEAR",
       "installId": "linear-desktop",
       "command": "linear-desktop",
       "displayName": "Linear",
@@ -73,6 +75,7 @@
     "notion": {
       "name": "Notion",
       "bundleId": "notion.id",
+      "envPrefix": "NOTION",
       "installId": "notion-desktop",
       "command": "notion-desktop",
       "displayName": "Notion",
@@ -143,6 +146,7 @@
     "superhuman": {
       "name": "Superhuman",
       "bundleId": "com.superhuman.electron",
+      "envPrefix": "SUPERHUMAN_DESKTOP",
       "installId": "superhuman-desktop",
       "command": "superhuman-desktop",
       "displayName": "Superhuman Desktop",
