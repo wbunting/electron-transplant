@@ -12,6 +12,17 @@ module.exports = {
   bundleId: 'notion.id',
   envPrefix: 'NOTION',
   dmg: { glob: 'Notion-*.dmg', app: 'Notion.app' },
+  source: {
+    page: 'https://www.notion.com/desktop',
+    feed: { type: 'electron-builder', url: 'https://desktop-release.notion-static.com/latest-mac.yml' },
+    // Per pin note.
+    dmg: {
+      universal: 'https://desktop-release.notion-static.com/Notion-{version}-universal.dmg',
+      x86_64: 'https://desktop-release.notion-static.com/Notion-{version}.dmg',
+    },
+    hosts: ['desktop-release.notion-static.com'],
+    retention: 'all',
+  },
   // Same code: the builds differ only in the embedded targetPlatform string.
   pins: [
     { sha256: 'efcf69504162f3349ac3792d1009b1906c98381667463fd42647f8886fd438ce', version: '7.43.0', electron: '45.1.0', note: 'universal' },
@@ -32,6 +43,8 @@ module.exports = {
       package: 'better-sqlite3',
       version: '13.0.1',
       integrity: 'sha512-LYpmOXdkpQYf4wmlxkdzW01XGlOXNIbjLg45yNkh0FQ4814VbK9PdOFmhZpYbej+EZtR/i3FDdhEG98HqZdgnA==',
+      // The same tarball, for packagers whose source lists take SHA-256.
+      sha256: '92935ff8280f933aff78f87e04eb718a21af003aec4e5bd0076f287aa1709da4',
       files: { 'prebuilds/linux-x64.node': 'prebuilds/linux-x64.node' },
       remove: ['build'],
     },

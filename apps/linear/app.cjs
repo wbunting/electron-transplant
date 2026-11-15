@@ -7,6 +7,15 @@ module.exports = {
   bundleId: 'com.linear',
   envPrefix: 'LINEAR',
   dmg: { glob: 'Linear-*.dmg', app: 'Linear.app' },
+  source: {
+    page: 'https://linear.app/download',
+    // What the app's own updater reads (Resources/app-update.yml).
+    feed: { type: 'electron-builder', url: 'https://releases.linear.app/latest-mac.yml' },
+    dmg: 'https://releases.linear.app/Linear-{version}-universal.dmg',
+    hosts: ['releases.linear.app'],
+    // Older releases stay downloadable.
+    retention: 'all',
+  },
   pins: [
     { sha256: '08d42b917bc44068231d47a9e14ae9fdac2ca95fa6b451e810fcda0f756ed4a3', version: '1.32.8', electron: '44.9.1', note: 'universal' },
   ],
