@@ -34,6 +34,9 @@ module.exports = {
     command: 'notion-desktop',
     comment: 'Notion — unofficial Linux port of the macOS desktop app',
     categories: 'Office;',
+    // Packages that install /usr/bin/notion-desktop (Omarchy's notion-desktop; the
+    // AUR's notion-desktop-git provides it).
+    conflicts: ['notion-desktop'],
   },
   natives: {
     // The local database. v13 is Node-API (ABI-stable across Electron versions) and

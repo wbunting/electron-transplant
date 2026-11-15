@@ -32,6 +32,14 @@ const USAGE = `electron-transplant: run macOS Electron apps on Linux Electron
       desktop entries, icon, licences, under DESTDIR. No side effects.
   electron-transplant install <app> --from BUILD_DIR [--layout rootless] [--prefix DIR]
       Install a build as \`build --install\` does.
+  electron-transplant pkgbuild <app> [--version V] [--variant NOTE] [--commit SHA | --local]
+                                 [--pkgrel N] [--maintainer 'NAME <EMAIL>'] [--out DIR] [--build]
+      A PKGBUILD (pacman) for a pin: prints it, or writes it and .SRCINFO to DIR.
+      electron-transplant comes from the release tag, --commit (pushed) or --local
+      (a tarball of this checkout beside the PKGBUILD). --build also runs makepkg
+      in DIR (default: the cache) and prints the package path; nothing is installed.
+  electron-transplant pkgbuild --write [--refresh-npm]
+      Regenerate packaging/arch/<app>/ (--refresh-npm: the npm tarball hashes too).
   electron-transplant inspect <app> [--dmg PATH]
       Survey a DMG: versions, native code, macOS window chrome, URL schemes,
       platform checks. For writing a new app config.
@@ -155,6 +163,48 @@ async function main(argv) {
       const prefix = path.resolve(args.prefix ?? path.join(os.homedir(), '.local'));
       require(path.join(ROOT, 'lib/install.cjs')).install({ config, configDir: dir, runtime: result.runtime, prefix });
       console.log(`Quit and reopen ${config.name} to use the new build.`);
+      return;
+    }
+    case 'pkgbuild': {
+      const args = parseArgs(rest, { flags: ['--write', '--refresh-npm', '--local', '--build'], values: ['--version', '--variant', '--commit', '--pkgrel', '--maintainer', '--out'] });
+      const arch = require(path.join(ROOT, 'lib/pkgbuild.cjs'));
+      if (args.write) {
+        if (args._.length || args.local || args.build || args.commit || args.out || args.version || args.variant || args.pkgrel || args.maintainer) throw Error('Usage: electron-transplant pkgbuild --write [--refresh-npm]');
+        if (args['refresh-npm']) await arch.refreshNpmHashes();
+        // An existing release tag must pin what these PKGBUILDs download: a pin change needs a new version.
+        const warnings = new Set();
+        for (const [id, { fields }] of Object.entries(arch.committed())) for (const w of arch.checkToolRef(id, fields.pin, { tag: `v${arch.toolVersion()}` })) warnings.add(w);
+        arch.writeCommitted();
+        for (const warning of warnings) console.error(`warning: ${warning}`);
+        return;
+      }
+      if (args._.length !== 1 || args['refresh-npm'] || (args.local && args.commit)) {
+        throw Error('Usage: electron-transplant pkgbuild <app> [--version V] [--variant NOTE] [--commit SHA | --local] [--pkgrel N] [--maintainer \'NAME <EMAIL>\'] [--out DIR] [--build]');
+      }
+      const id = args._[0];
+      const { config } = loadApp(id);
+      if (args.local && !args.out && !args.build) throw Error('--local writes a tarball beside the PKGBUILD: pass --out DIR (or --build)');
+      const out = args.out ? path.resolve(args.out) : args.build ? require(path.join(ROOT, 'lib/util.cjs')).cacheDir('pkgbuild', id) : null;
+      if (out) fs.mkdirSync(out, { recursive: true });
+      let tool;
+      if (args.local) tool = await arch.localTarball(out);
+      else if (args.commit) tool = { commit: require(path.join(ROOT, 'lib/util.cjs')).run('git', ['-C', ROOT, 'rev-parse', '--verify', `${args.commit}^{commit}`]).trim() };
+      else tool = { tag: `v${arch.toolVersion()}` };
+      const pkgrel = args.pkgrel === undefined ? 1 : Number(args.pkgrel);
+      const generatedBy = ['electron-transplant pkgbuild', id, ...['version', 'variant', 'pkgrel'].filter((k) => args[k]).map((k) => `--${k} ${args[k]}`),
+        ...(args.commit ? [`--commit ${tool.commit}`] : []), ...(args.local ? ['--local'] : [])].join(' ');
+      const { pkgbuild, srcinfo, fields } = arch.generate(id, { version: args.version, variant: args.variant, tool, pkgrel, maintainer: args.maintainer, generatedBy });
+      if (!tool.file) for (const warning of arch.checkToolRef(id, fields.pin, tool)) console.error(`warning: ${warning}`);
+      if (!out) {
+        process.stdout.write(pkgbuild);
+        return;
+      }
+      fs.writeFileSync(path.join(out, 'PKGBUILD'), pkgbuild);
+      fs.writeFileSync(path.join(out, '.SRCINFO'), srcinfo);
+      console.error(`Wrote ${path.join(out, 'PKGBUILD')} (${fields.pkgname} ${fields.pkgver}-${fields.pkgrel}) and .SRCINFO`);
+      if (!args.build) return;
+      const packages = arch.makepkg(out);
+      if (packages.length) console.error(`Install ${config.name} with: sudo pacman -U ${packages.join(' ')}`);
       return;
     }
     case 'inspect': {
