@@ -15,7 +15,7 @@ is packed and each has an obvious place for a Linux implementation.
 Other darwin-only bridge features: `captureScreenshot` (undefined off macOS),
 `systemPreferences.getUserDefault` reads (AutoUpdateDisabled, titlebar
 double-click). Traffic-light window buttons are emulated by
-`compat/window-chrome.cjs` (see the top-level README).
+`compat/window-chrome.cjs` (see docs/how-it-works.md).
 
 ## Porting swipe navigation
 

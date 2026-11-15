@@ -2,7 +2,7 @@
 // (dist/main.js) is webpack output, not minified, and the app has no native code.
 // Electron's Linux UA already gets the native sign-in flow (state=native-login,
 // handed to the default browser), so no user-agent spoofing is needed. What breaks
-// is the browser's side of that sign-in; see signin/ and the README.
+// is the browser's side of that sign-in; see signin/ and docs/apps.md.
 const MAIN = 'dist/main.js';
 
 module.exports = {

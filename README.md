@@ -1,32 +1,142 @@
-# electron-transplant
+<p align="center">
+  <img src="docs/assets/icon.svg" width="128" height="128" alt="">
+</p>
 
-Runs macOS-only Electron apps on Linux. Electron's JavaScript API is the same on
-every platform, so an app's code can move from its macOS Electron onto the official
-**Linux** build of the *same* Electron version. What breaks is the Mac-native part.
-This tool handles that part per app and adds a compatibility layer for macOS-only
-behaviour (currently: traffic-light window buttons).
+<h1 align="center">electron-transplant</h1>
 
-Apps: **Linear**, **Notion**, **Figma**, **Superhuman**. Rootless; Linux x86_64 only.
+<p align="center">
+  <b>Run macOS-only Electron apps on Linux.</b><br>
+  Linear · Notion · Figma · Superhuman, from the vendor's own macOS build.
+</p>
 
-No app code is in this repository or produced for distribution: you supply the
-vendor's own macOS DMG, and the build runs on your machine. Not affiliated with
-or endorsed by Linear, Notion, Figma or Superhuman; their names are trademarks
-of their owners. Use of each app remains subject to its own terms.
+<p align="center">
+  <a href="https://github.com/wbunting/electron-transplant/actions/workflows/test.yml"><img src="https://github.com/wbunting/electron-transplant/actions/workflows/test.yml/badge.svg" alt="tests"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
+  <img src="https://img.shields.io/badge/platform-Linux%20x86__64-informational" alt="Linux x86_64">
+  <img src="https://img.shields.io/badge/Wayland-native-success" alt="native Wayland">
+</p>
 
-## Requirements
+---
+
+Plenty of desktop apps are Electron underneath: JavaScript on top of Chromium.
+Electron's API is the same on every platform, so an app's code can move from its
+macOS build onto the **official Linux build of the same Electron version**. What
+doesn't move is the small Mac-native part. electron-transplant handles that part
+for each app, verifies everything on the way, and installs a normal Linux app with a
+launcher, an icon and working links.
+
+Nothing from the vendor is in this repository or redistributed: you download the
+app's macOS DMG yourself, and the build runs on your machine.
+
+## Apps
+
+| App | Version | Mac-only parts and how they're handled | Notes |
+| --- | --- | --- | --- |
+| **Linear** | 1.32.8 | 3 trackpad addons → small JS stand-ins | |
+| **Notion** | 7.43.0 | SQLite addon → its official Linux build; 3 others trimmed | |
+| **Figma** | 126.11.9 | Figma's own Linux code path; local fonts via fontconfig | [notes](docs/apps.md#figma) |
+| **Superhuman** | 1045.0.0 | none | [sign-in](docs/apps.md#superhuman) |
+
+Want another app? If it's Electron, `electron-transplant inspect` shows how much work
+it is in about a minute. [Request it](https://github.com/wbunting/electron-transplant/issues/new?template=app-request.md)
+or [add it](CONTRIBUTING.md#adding-an-app).
+
+## Quick start
+
+```sh
+git clone https://github.com/wbunting/electron-transplant
+cd electron-transplant
+npm ci --ignore-scripts
+
+# Download Linear's macOS DMG from https://linear.app/download into ~/Downloads, then:
+bin/electron-transplant build linear --install
+linear-desktop
+```
+
+That builds into `build/`, installs under `~/.local` and puts **Linear** in your app
+launcher. It never touches the app's profile (`~/.config/Linear`). If the vendor has
+shipped a newer version than the pinned one, the build stops and says so: see
+[Getting the apps](#getting-the-apps).
+
+## Why it's safe to run
+
+- **Verified end to end.** The DMG must match a pinned SHA-256, `app.asar` must match
+  the hash the app's own bundle declares, and the Linux Electron build must match
+  its pinned hash. Nothing from the DMG is executed during the build.
+- **No leftover native code.** After assembly every file is scanned: a single Mac,
+  Windows or wrong-architecture binary fails the build.
+- **Chromium's sandbox stays on.** Launchers pass no sandbox-disabling switches.
+- **Fails loudly.** Patches must match the vendor's code exactly, so a vendor update
+  breaks the *build*, never silently the app.
+- **Rootless and reversible.** Versioned installs under `~/.local` behind a `current`
+  symlink; the previous version stays for rollback.
+
+More in [SECURITY.md](SECURITY.md).
+
+## How it works
+
+```mermaid
+flowchart LR
+  dmg["macOS DMG<br/>from the vendor"] --> verify["Verify<br/>pinned hashes"]
+  verify --> native["Replace Mac-only<br/>native code"]
+  native --> patch["Exact-match<br/>patches"]
+  patch --> electron["Official Linux Electron<br/>same version"]
+  electron --> app["Linux app<br/>launcher · icon · links"]
+```
+
+A small compatibility layer runs inside the app:
+
+- **macOS window buttons** for apps that draw their own title bar and expect the
+  red, yellow and green "traffic lights" (Linear, Notion), in a sandboxed overlay that
+  follows focus, theme and fullscreen.
+- **A recorder** that notes every Mac-only Electron API the app touches at runtime.
+  `electron-transplant report <app>` turns it into a to-do list, which is how a new
+  app goes from "it starts" to "it works". It never logs URLs, arguments or your
+  home path.
+
+`inspect` surveys a DMG before you write any config (abridged):
+
+```console
+$ electron-transplant inspect linear
+Linear-1.32.8-universal.dmg  sha256 08d42b91…  pinned (universal)
+Linear 1.32.8  bundle com.linear  Electron 44.9.1
+
+Native code in the app:
+  [shim] @linear/desktop-force-press
+      mach-o node_modules/@linear/desktop-force-press/build/Release/force_press.node
+  [shim] @linear/desktop-haptics
+      mach-o node_modules/@linear/desktop-haptics/build/Release/haptics.node
+  [shim] @linear/desktop-swipe-navigation
+      mach-o node_modules/@linear/desktop-swipe-navigation/build/Release/swipe_navigation.node
+
+macOS window chrome (occurrences):
+  titleBarStyle              4
+  trafficLightPosition       1
+  setWindowButtonPosition    1
+
+Configured patches against this bundle:
+  ok   disable-auto-update-on-linux (1/1)
+  ok   mac-title-bar-on-linux (1/1)
+```
+
+The full pipeline and compatibility layer are described in
+[docs/how-it-works.md](docs/how-it-works.md).
+
+## Install
+
+### Requirements
 
 - Linux on x86_64, Wayland or X11.
 - Node.js 22.15 or newer, npm, Python 3, `unzip`.
-- 7-Zip to read the DMG (`7zz` or `7z`; the `7zip` package on most distributions).
+- 7-Zip to read the DMG (`7zz` or `7z`: the `7zip` package on most distributions).
   On Arch without it, the build fetches Arch's package rootlessly and checks its
   signature with `pacman-key`. `SEVENZIP=/path/to/7z` picks a specific binary.
-- For the desktop entries: `xdg-utils` and `desktop-file-utils` (usually present).
+- For desktop entries: `xdg-utils` and `desktop-file-utils` (usually present).
 
-Tested on Arch Linux with Hyprland (Wayland, 2× HiDPI) and Vicinae. Other desktops
-and distributions should work but are untested; reports are welcome.
-On desktops that draw their own title bars, see `<PREFIX>_FRAMELESS` below.
+Tested on Arch Linux with Hyprland (Wayland, 2× HiDPI). Other desktops and
+distributions should work but are untested: reports are welcome.
 
-## Getting the apps
+### Getting the apps
 
 Download each app's **macOS** DMG from its vendor: the Intel or universal build,
 which are the ones pinned.
@@ -38,189 +148,71 @@ which are the ones pinned.
 | Figma | https://www.figma.com/downloads/ (Intel) | `~/Downloads/figma-desktop-mac/` |
 | Superhuman | https://superhuman.com/download | `~/Downloads/superhuman-mac/` |
 
-Or pass `--dmg PATH`. Each build checks the DMG against a pinned SHA-256
-(`pins` in `apps/<app>/app.cjs`). A newer vendor release isn't pinned yet: see
-[CONTRIBUTING.md](CONTRIBUTING.md#updating-an-app-to-a-new-version).
+Or pass `--dmg PATH`. A vendor release newer than the pinned one needs pinning first:
+see [CONTRIBUTING.md](CONTRIBUTING.md#updating-an-app-to-a-new-version).
 
-## Usage
+### Commands
 
 ```sh
-git clone https://github.com/wbunting/electron-transplant
-cd electron-transplant
-npm ci --ignore-scripts && npm test
-ln -s "$PWD/bin/electron-transplant" ~/.local/bin/    # optional
+ln -s "$PWD/bin/electron-transplant" ~/.local/bin/   # optional
 
-electron-transplant apps                         # configured apps and pinned versions
-electron-transplant inspect notion               # survey the DMG before (re)writing a config
-electron-transplant build notion                 # newest ~/Downloads/Notion-*.dmg -> build/
-electron-transplant build notion --install       # + install under ~/.local
-electron-transplant report notion                # what Mac-only APIs it hit at runtime
+electron-transplant apps                    # configured apps and pinned versions
+electron-transplant inspect notion          # survey a DMG
+electron-transplant build notion            # build into build/ only
+electron-transplant build notion --install  # build and install under ~/.local
+electron-transplant report notion           # Mac-only APIs the app hit at runtime
 ```
 
-`--install` puts the runtime in `~/.local/opt/<id>/<version>-local-<hash>/` behind an
-atomic `current` symlink (old runtimes stay for rollback), plus a launcher in
-`~/.local/bin`, a desktop entry registering the app's URL schemes, and the icon.
-Profiles (`~/.config/Linear`, `~/.config/Notion`) are never touched.
-The desktop entry names its icon by absolute path: Vicinae ignores
-`~/.local/share/icons/hicolor` (no `index.theme`), so a theme name shows a placeholder
-there. An existing `icon-theme.cache` in that directory is also regenerated for GTK.
+Installed apps are named `<app>-desktop` (`linear` and `notion` are already taken by
+those apps' command-line tools). Each gets a launcher in `~/.local/bin`, a desktop
+entry with the app's URL schemes, and its icon.
 
-| App | Launcher | Schemes | Native code |
-| --- | --- | --- | --- |
-| Linear 1.32.8 (Electron 44.9.1) | `linear-desktop` | `linear` | 3 trackpad addons → shims |
-| Notion 7.43.0 (Electron 45.1.0) | `notion-desktop` | `notion`, `notion-agents` | `better-sqlite3` → official Node-API prebuild; 3 others stubbed/trimmed |
-| Figma 126.11.9 (Electron 44.11.2) | `figma-desktop` | `figma-desktop`; `figma` registered, **not** default | none loaded on Linux (Figma's own JS path); fonts → fontconfig module |
-| Superhuman 1045.0.0 (Electron 45.2.3) | `superhuman-desktop` | `superhuman`; `mailto` registered, **not** default | none |
+### Settings
 
-(`linear` and `notion` are the CLIs, hence `-desktop`; `figma-desktop` sits beside
-figma-linux-next, which stays the `figma://` handler. See `apps/figma/NATIVE.md`.
-`superhuman-desktop` can sit beside the Windows-build `superhuman-linux` port.)
-
-### Superhuman sign-in
-
-Superhuman's sign-in opens in your browser and should end by handing the result
-back to the app. Superhuman's page only does that for Windows and macOS browsers;
-on Linux it says "login attempt expired". Two ways through (`apps/superhuman/signin/`):
-
-- **Browser extension** (Chromium-based browsers, one-time): `chrome://extensions` →
-  Developer mode → Load unpacked → `~/.local/share/superhuman-desktop/browser-extension`.
-  Sign-in then returns to the app on its own. See its README.
-- **Without it:** copy the URL of the browser tab that says "expired", then run
-  **Superhuman Desktop — Finish browser sign-in** from your launcher
-  (`superhuman-desktop-finish-login`). It forwards that URL to the app and clears the
-  clipboard. Needs wl-clipboard (Wayland) or xclip/xsel (X11).
-
-Both accept only Superhuman's own HTTPS callback carrying a native-app code and one
-Google or Microsoft login, and change nothing in it: the app still checks it against
-the sign-in it started. Superhuman claims `superhuman://` each time it starts, so
-with two Superhuman ports installed, sign in with the one opened last.
-
-## Pipeline (`lib/build.cjs`)
-
-1. **Extract** with 7-Zip (UDIF → HFS+): only `Info.plist`, `Resources/` and the
-   Electron framework's `Info.plist`, never HFS+ extended attributes. Nothing from
-   the DMG is executed. The `.app` is found by listing the image (volume names vary).
-   Without a system 7-Zip, `scripts/fetch-7zip.sh` fetches Arch's package and
-   verifies it with `pacman-key`, rootless.
-2. **Verify**: the DMG's SHA-256 against the app's pins; `app.asar`'s header hash
-   against the bundle's `ElectronAsarIntegrity`; the Linux Electron zip and its
-   `electron.d.ts` against `pins/electron.json`. Unpinned versions need
-   `--accept-unpinned`, which takes hashes from the release's `SHASUMS256.txt` and
-   prints what to pin. Apple's code signature itself is not checked (no Linux tooling);
-   the pins are the trust anchor.
-3. **Native code**: each module in the config is `shim`med (JS file), `stub`bed
-   (generated: records the call, throws), `remove`d (when the module has its own Linux
-   path) or replaced by an `npm-prebuild` from its integrity-pinned npm tarball.
-   Addons outside packages (`nativeFiles`, e.g. Figma's `bindings.node`) can only be
-   removed, with a reason. App-specific Linux code is copied in with `addFiles`. Then
-   *every* file in the app and resources is scanned: any Mach-O, Windows or
-   non-x86-64 ELF binary fails the build.
-4. **Patch**: exact-match source patches, each with an expected match count, so a
-   changed bundle fails instead of shipping half-patched.
-5. **Compat entry**: `package.json` `main` → `linux-compat/entry.cjs` (original kept
-   as `originalMain`), `desktopName` set so Wayland `app_id` and
-   `setAsDefaultProtocolClient` match the installed desktop file.
-6. **Assemble**: Linux Electron + repacked `app.asar` (`*.node` unpacked), resources
-   minus Mac-only files, derived resources (e.g. Notion's Linux tray icons from its
-   menu-bar template icon), icon from `CFBundleIconFile`, and `TRANSPLANT.json`
-   recording what was done.
-
-Extraction tolerates one kind of malformed archive: invalid placeholder entries an
-app names in `asar.dropInvalidEntries` (Figma's `/.codesign`, size −1000) are left out
-via a sanitised copy; the integrity check hashes the header as stored.
-
-## Compatibility layer (`compat/`, runs in the app's main process)
-
-- **Recorder** (`runtime.cjs`): observation only, behaviour unchanged. Records reads of
-  macOS/Windows-only Electron members (listed per Electron version from its own
-  `@platform` typings), calls to platform-tagged no-ops, failed native loads (with
-  binary format), spawns of missing executables (`/usr/sbin/screencapture`…), throwing
-  IPC handlers and uncaught errors, with stack frames into the app's bundle; child
-  processes that die (renderers, GPU, utility processes such as an app's Node
-  workers); and how each session ended. A session with no clean-exit record ended in
-  a native crash, SIGKILL or power loss, and `report` lists it with any Crashpad
-  minidumps in the app's `crashDumps` directory. Arguments, URLs and the home path are
-  never logged. `electron-transplant report <app>`.
-- **Facade** (`facade.cjs`): Electron's exports are read-only getters, so the app's own
-  files get a modified `electron` module instead: `require('electron')` and
-  `require('electron/main')` through `Module._load`, ES `import` through
-  `module.registerHooks`. Unmodified exports forward lazily.
-- **Window chrome** (`window-chrome.cjs`): windows created with `titleBarStyle`
-  `hidden`/`hiddenInset`/`customButtonsOnHover` get macOS traffic lights in a small
-  sandboxed overlay view kept above the app's views. `trafficLightPosition`,
-  `setWindowButtonPosition`, `getWindowButtonPosition` and `setWindowButtonVisibility`
-  work. Buttons follow focus, theme and fullscreen as on macOS; clicks don't take
-  focus. `titleBarOverlay` is dropped: on Linux it would draw Windows-style buttons
-  too. The window keeps its normal frame because Hyprland floats frameless
-  (client-side-decorated) windows; `<PREFIX>_FRAMELESS=1` opts out.
-  The overlay models each Electron button frame as 14×16 with a 12px circle, 20px apart
-  (pre-Tahoe macOS). That is unverified against a real Mac.
-- **Protocol client guard** (`compat.defaultProtocolClient: false`): the app's
-  `app.setAsDefaultProtocolClient` is recorded and declined (on Linux it runs
-  `xdg-settings`), for schemes another installed app keeps. `install.defaultSchemes`
-  likewise limits which registered schemes the install makes default (`xdg-mime
-  default`); the rest are only listed in the desktop entry.
-  `<PREFIX>_DEFAULT_PROTOCOL_CLIENT=1` restores the call.
-- **Hooks** (`compat.hooks`): app files (from `addFiles`) the entry loads before the
-  app's main, given `electron`, the env reader and the recorder.
-- **Page adapter** (`title-bar-page-adapter.cjs`, opt-in per app): for apps whose
-  *remote* web UI only makes room for the buttons on macOS (Linear checks
-  `navigator.platform`), it pads the title-bar row clear of the buttons and centres
-  them on it. Apps with local UI (Notion's tab bar) are patched directly instead.
-
-| Variable (`LINEAR_…`, `NOTION_…`) | Effect |
-| --- | --- |
-| `<PREFIX>_TRAFFIC_LIGHTS=0` | no emulated buttons; normal frame |
-| `<PREFIX>_FRAMELESS=1` | frameless window as on macOS |
-| `<PREFIX>_USE_WAYLAND=0` | XWayland instead of native Wayland |
-| `<PREFIX>_COMPAT_LOG=FILE` | recorder log (default `~/.local/state/electron-transplant/<app>/compat-events.jsonl`) |
-| `<PREFIX>_COMPAT_FACADE=0` | debugging only: no facade |
-
-Figma only (`apps/figma/NATIVE.md`):
+Each app has an environment prefix: `LINEAR_`, `NOTION_`, `FIGMA_DESKTOP_`,
+`SUPERHUMAN_DESKTOP_`.
 
 | Variable | Effect |
 | --- | --- |
-| `FIGMA_DESKTOP_MCP_PORT=N` | serve Figma's MCP server on N instead of 3845 (figma-linux-next uses 3845) |
-| `FIGMA_DESKTOP_FRAMELESS=1` | frameless main window |
+| `<PREFIX>_USE_WAYLAND=0` | XWayland instead of native Wayland |
+| `<PREFIX>_TRAFFIC_LIGHTS=0` | no emulated window buttons |
+| `<PREFIX>_FRAMELESS=1` | frameless window, as on macOS. Off by default because Hyprland floats frameless windows; worth trying on desktops that draw their own title bar |
 
-Launchers pass no sandbox-disabling switches (Chromium uses its user-namespace
-sandbox), which Linear refuses to start with anyway.
+App-specific settings and notes: [docs/apps.md](docs/apps.md).
 
-## Adding an app
+## FAQ
 
-1. Put its DMG in `~/Downloads` (or its own subdirectory, `dmg.dir`, to keep the
-   untrusted download apart), copy an `apps/<id>/app.cjs`, set `id`, `name`,
-   `bundleId`, `envPrefix`, `dmg`, `install` (`install.name` for the launcher name,
-   `install.schemes`/`install.defaultSchemes` for extra and default URL schemes,
-   `install.share` for files that need a fixed path under `~/.local/share/<install.id>`,
-   and `install.helpers` for commands that run a script from it with the app's
-   Electron as Node, each with its own desktop entry; see `apps/superhuman/app.cjs`).
-2. `electron-transplant inspect <id>` lists its native code (handled or not), Mach-O
-   resources, how it loads Electron, macOS window-chrome calls, platform checks and
-   whether configured patches match.
-3. Handle each native module and resource; read the bundle around its `darwin`
-   window-chrome checks and add patches where its Linux branch should look like macOS.
-4. `build <id> --accept-unpinned`, check it (below), then add the printed hashes.
+**Do the apps update themselves?**
+No: their updaters would try to install macOS releases, so they're switched off.
+Download the newer DMG and rebuild; if it isn't pinned yet, see
+[CONTRIBUTING.md](CONTRIBUTING.md#updating-an-app-to-a-new-version).
 
-## Checking a build without touching the desktop
+**Why the macOS build?**
+The macOS bundle declares a hash for its own `app.asar`, which the build checks, and
+its Mac-only native code is mostly optional extras (trackpad, haptics) that the apps
+already skip on other platforms.
 
-`scripts/dev-snapshot.cjs RUNTIME OUT STEPS.json [-- APP_ARGS]` runs a throwaway copy
-of a built runtime under Electron's headless platform with a throwaway profile
-(`--user-data-dir` and `XDG_CONFIG_HOME`, for apps like Figma that pick their own) and a
-step script (`bounds`, `wait`, `focus`, `hover`, `click`, `eval` (`at` or `in`: a
-view by URL), `main` (main-process code), `state`, `snapshot`),
-compositing every view into PNGs. Headless Electron ignores fullscreen, and native dialogs crash it.
-`ET_SMOKE=1 npm test` does a headless launch of every built app.
+**Will it work for app X?**
+If X is an Electron app with a macOS build, probably, with some work.
+`electron-transplant inspect` tells you how much. Native Mac apps (Swift, AppKit,
+Catalyst) can't be transplanted.
 
-## Tests
+**ARM64?**
+Not yet: the build checks binaries for x86_64. Linux Electron ships arm64, so it's
+possible.
 
-`npm test`: unit tests; real-Electron tests (recorder unchanged-behaviour on 44.9.1 and
-45.1.0, facade via `require`/`electron/main`/`import`/ES main, traffic lights and page
-adapter, glyph centring at 1×/1.5×/2×); install/launcher; and a full build of every
-app whose pinned DMG is in its download directory. Electron tests skip when the pinned zip
-isn't cached (`~/.cache/electron-transplant`); `npm run fetch-electron` downloads and
-verifies every pinned version. CI runs everything except the DMG builds.
+**Is this allowed?**
+electron-transplant doesn't distribute any app. You download each app from its
+vendor, and your use of it stays subject to the vendor's terms.
+
+## Contributing
+
+Updating an app to a new vendor version is the most useful contribution, and
+usually a small one. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT (`LICENSE`). This covers this repository's code only, not the apps it adapts.
+[MIT](LICENSE), for this repository's code only, not the apps it adapts.
+
+Not affiliated with or endorsed by Linear, Notion, Figma or Superhuman. Their names
+are trademarks of their owners.

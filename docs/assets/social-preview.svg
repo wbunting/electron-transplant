@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <radialGradient id="glow" cx="0.28" cy="0.5" r="0.55">
+      <stop offset="0" stop-color="#1f3b36"/>
+      <stop offset="1" stop-color="#0d1117"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="640" fill="url(#glow)"/>
+  <svg x="90" y="140" width="360" height="360" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="leaf-left" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#86efac"/>
+      <stop offset="1" stop-color="#16a34a"/>
+    </linearGradient>
+    <linearGradient id="leaf-right" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5eead4"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+    <linearGradient id="pot" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d9673f"/>
+      <stop offset="1" stop-color="#a8432a"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f08a5d"/>
+      <stop offset="1" stop-color="#d8693f"/>
+    </linearGradient>
+  </defs>
+  <!-- sprout -->
+  <path d="M128 140 C128 118 126 100 131 80" fill="none" stroke="#15803d" stroke-width="10" stroke-linecap="round"/>
+  <path d="M127 104 C98 106 70 88 62 54 C96 50 124 70 127 104 Z" fill="url(#leaf-left)"/>
+  <path d="M127 104 C112 92 92 76 74 62" fill="none" stroke="#dcfce7" stroke-opacity=".55" stroke-width="3" stroke-linecap="round"/>
+  <path d="M131 84 C140 52 170 30 208 32 C204 70 172 94 131 84 Z" fill="url(#leaf-right)"/>
+  <path d="M131 84 C152 70 172 54 194 42" fill="none" stroke="#ccfbf1" stroke-opacity=".55" stroke-width="3" stroke-linecap="round"/>
+  <!-- pot body -->
+  <path d="M58 166 H198 L186 226 Q184 236 174 236 H82 Q72 236 70 226 Z" fill="url(#pot)"/>
+  <!-- rim, as a title bar -->
+  <rect x="44" y="132" width="168" height="38" rx="11" fill="url(#rim)"/>
+  <rect x="44" y="164" width="168" height="6" fill="#000" fill-opacity=".12"/>
+  <circle cx="68" cy="151" r="8.5" fill="#ff5f57" stroke="#000" stroke-opacity=".18" stroke-width="1.5"/>
+  <circle cx="92" cy="151" r="8.5" fill="#febc2e" stroke="#000" stroke-opacity=".18" stroke-width="1.5"/>
+  <circle cx="116" cy="151" r="8.5" fill="#28c840" stroke="#000" stroke-opacity=".18" stroke-width="1.5"/>
+  </svg>
+  <g font-family="Noto Sans, DejaVu Sans, sans-serif" fill="#e6edf3">
+    <text x="500" y="292" font-size="72" font-weight="700" letter-spacing="-1">electron-transplant</text>
+    <text x="502" y="364" font-size="38" fill="#9da7b3">Run macOS-only Electron apps on Linux.</text>
+    <text x="502" y="452" font-size="30" fill="#5eead4">Linear · Notion · Figma · Superhuman</text>
+  </g>
+</svg>

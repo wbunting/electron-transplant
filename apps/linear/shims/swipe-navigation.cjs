@@ -1,6 +1,6 @@
 // Linux shim for @linear/desktop-swipe-navigation (macOS NSEvent scroll phases:
 // phase, momentumPhase, scrollingDeltaX/Y). A Linux port could derive these from
-// Wayland pointer axis/axis_stop events in the renderer; see native/README.md.
+// Wayland pointer axis/axis_stop events in the renderer; see ../NATIVE.md.
 'use strict';
 const record = (api) => globalThis[Symbol.for('electron-transplant.recorder')]?.record({ kind: 'native-shim', api });
 function observe() {

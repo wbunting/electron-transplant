@@ -44,8 +44,27 @@ Vendors ship often, so this is the most common change.
 
 ## Adding an app
 
-See "Adding an app" in the README. Each app lives in `apps/<id>/` with an `app.cjs`
-and whatever shims, notes (`NATIVE.md`) and helper files it needs.
+Each app lives in `apps/<id>/` with an `app.cjs` and whatever shims, notes
+(`NATIVE.md`) and helper files it needs. The existing four range from simple
+(`apps/superhuman`: no native code) to involved (`apps/figma`: a fonts module).
+
+1. Put its DMG in `~/Downloads` (or its own subdirectory, `dmg.dir`, to keep the
+   untrusted download apart), copy an `apps/<id>/app.cjs`, set `id`, `name`,
+   `bundleId`, `envPrefix`, `dmg`, `install` (`install.name` for the launcher name,
+   `install.schemes`/`install.defaultSchemes` for extra and default URL schemes,
+   `install.share` for files that need a fixed path under `~/.local/share/<install.id>`,
+   and `install.helpers` for commands that run a script from it with the app's
+   Electron as Node, each with its own desktop entry; see `apps/superhuman/app.cjs`).
+2. `electron-transplant inspect <id>` lists its native code (handled or not), Mach-O
+   resources, how it loads Electron, macOS window-chrome calls, platform checks and
+   whether configured patches match.
+3. Handle each native module and resource; read the bundle around its `darwin`
+   window-chrome checks and add patches where its Linux branch should look like macOS.
+4. `build <id> --accept-unpinned`, check it (see "Updating an app" above, step 5), then add the printed hashes.
+
+[docs/how-it-works.md](docs/how-it-works.md) describes what the pipeline and
+compatibility layer do with each config option, and how to check a build headless
+without putting a window on your desktop (`scripts/dev-snapshot.cjs`).
 
 ## Rules
 
