@@ -29,3 +29,25 @@ jobs:
       - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       # The per-app DMG builds skip here: vendors' DMGs are never in CI.
       - run: npm test
+
+  # The PKGBUILDs as Arch's own tools see them: makepkg --printsrcinfo against the
+  # committed .SRCINFO (tests/pkgbuild.test.cjs) and namcap. Nothing is downloaded
+  # or built: vendors' DMGs are never in CI.
+  arch:
+    runs-on: ubuntu-24.04
+    container: archlinux:base-devel
+    steps:
+      - run: pacman -Syu --noconfirm --needed git namcap nodejs
+      - uses: actions/checkout@v4
+      # makepkg refuses to run as root.
+      - run: useradd -m builder && chown -R builder .
+      - run: su builder -c 'node --test tests/pkgbuild.test.cjs'
+      - name: namcap
+        run: |
+          status=0
+          for pkgbuild in packaging/arch/*/PKGBUILD; do
+            out=$(namcap "$pkgbuild")
+            printf '%s\n' "$out"
+            if grep -q ' E: ' <<<"$out"; then status=1; fi
+          done
+          exit $status

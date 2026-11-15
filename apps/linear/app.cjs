@@ -27,6 +27,8 @@ module.exports = {
     categories: 'Development;ProjectManagement;',
     // Registered at runtime by setAsDefaultProtocolClient; not in Info.plist.
     schemes: ['linear'],
+    // Packages that install the same files (/usr/bin/linear-desktop, /usr/lib/linear-desktop).
+    conflicts: ['linear-bin'],
   },
   // Three optional Mac trackpad addons, lazily required in try/catch and darwin-gated.
   // See NATIVE.md for their APIs and what a Linux swipe-navigation port would need.
