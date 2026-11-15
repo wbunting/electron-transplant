@@ -116,6 +116,11 @@ echo "ICON=\${ET_APP_ICON-unset}" >> "$HOME/argv"
   fs.writeFileSync(path.join(runtime, 'LICENSE'), 'electron licence');
   fs.writeFileSync(path.join(runtime, 'LICENSES.chromium.html'), 'chromium licences');
   fs.writeFileSync(path.join(runtime, 'TRANSPLANT.json'), JSON.stringify({ iconSize: 512, ...transplant }));
+  // As unzip restores Electron 45.1.0's zip (umask does not apply to chmod).
+  fs.chmodSync(path.join(runtime, 'electron'), 0o777);
+  fs.chmodSync(path.join(runtime, 'chrome-sandbox'), 0o777);
+  fs.chmodSync(path.join(runtime, 'resources/app.asar'), 0o666);
+  fs.chmodSync(path.join(runtime, 'resources'), 0o777);
   return path.dirname(runtime);
 }
 
@@ -165,6 +170,8 @@ test('install --layout package stages a system layout under DESTDIR with final p
   for (const file of ['usr/bin/notion-desktop', 'usr/share/applications/notion-desktop.desktop']) {
     assert.ok(!fs.readFileSync(path.join(destdir, file), 'utf8').includes(dir), `${file} mentions the staging directory`);
   }
+  // Modes as an archive left them (Electron 45.1.0's zip: 0666/0777) lose group and other write.
+  for (const file of ['electron', 'chrome-sandbox', 'resources/app.asar']) assert.equal(fs.statSync(path.join(destdir, 'usr/lib/notion-desktop', file)).mode & 0o022, 0, file);
   // Re-staging replaces the runtime rather than merging into it.
   fs.writeFileSync(path.join(destdir, 'usr/lib/notion-desktop/stale'), '');
   assert.equal(cli(['install', 'notion', '--from', path.join(from, 'runtime'), '--layout', 'package', '--prefix', '/usr', '--destdir', destdir]).status, 0);
