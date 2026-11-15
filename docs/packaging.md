@@ -205,9 +205,10 @@ and npm tarballs (URLs and hashes from `sources.json`); `electron-transplant bui
 --offline` with them and nixpkgs' `_7zz`; `install --layout package --prefix $out`;
 then the treatment nixpkgs gives its own binary Electron: `autoPatchelfHook` on
 `lib/<installId>` with the same libraries, nixpkgs' Vulkan loader in place of the
-bundled one, and a launcher wrapped by `wrapGAppsHook3` (GSettings schemas,
+bundled one, and a launcher wrapped with `wrapGAppsHook3`'s settings (GSettings schemas,
 `XDG_DATA_DIRS`) with `xdg-open`, `fc-list` (Figma's local fonts) and clipboard tools
-(Superhuman's sign-in helper) after your own `PATH`. The vendor's and Electron's
+(Superhuman's sign-in helper) after your own `PATH`. The wrapper also picks the GPU
+drivers outside NixOS (`nix/gl-setup.sh`, below). The vendor's and Electron's
 files are not stripped or rewritten otherwise. `@electron/asar` comes from
 `package-lock.json` through nixpkgs' `importNpmLock`, so there is no extra hash to keep
 in sync. A pin bump here (`npm run sources`) needs no Nix change.
@@ -246,11 +247,34 @@ still serves that DMG.
   `~/.local/share/applications` with the same name, which wins: remove one of them.
 - URL schemes: the desktop entries list them, but nothing becomes a default handler.
   `xdg-mime default linear-desktop.desktop x-scheme-handler/linear` makes it one.
-- GPU: nixpkgs' OpenGL and Vulkan look for drivers only where NixOS puts them
-  (`/run/opengl-driver`). Elsewhere Chromium falls back to software rendering, which
-  works for these apps but costs CPU. [nixGL](https://github.com/nix-community/nixGL)
-  (`nix run --impure github:nix-community/nixGL -- linear-desktop`, or Home Manager's
-  `targets.genericLinux.nixGL`) provides the host's drivers.
+- GPU: nixpkgs' OpenGL, GBM and Vulkan look for drivers only where NixOS puts them
+  (`/run/opengl-driver`), and without them Chromium's GPU process can't start: no
+  window. So when `/run/opengl-driver` doesn't exist and nothing else set up GL (no
+  `__EGL_VENDOR_LIBRARY_FILENAMES`, `__EGL_VENDOR_LIBRARY_DIRS`, `LIBGL_DRIVERS_PATH`
+  or `GBM_BACKENDS_PATH`, which nixGL sets), the launcher points libglvnd, GBM and the
+  Vulkan loader at nixpkgs' Mesa, which is part of the package. That is hardware
+  rendering on AMD, Intel and other GPUs Mesa drives (nouveau, virtio, …), with the
+  host's kernel driver; nothing else is needed. Mesa and the LLVM it uses make the
+  closure about 0.8 GiB larger (a 0.2 GiB download); on NixOS the overlay's Mesa is
+  usually the system's own already.
+  Mesa has no driver for NVIDIA's proprietary one: when that drives every GPU, the app
+  renders in software (SwiftShader, which Electron ships; WebGL still works) and says
+  so once on stderr and in `launcher.log`. For hardware rendering there, run it with
+  [nixGL](https://github.com/nix-community/nixGL)'s NVIDIA wrapper:
+  `nix run --impure github:nix-community/nixGL#nixGLNvidia -- linear-desktop` (or Home
+  Manager's `targets.genericLinux.nixGL`). `<PREFIX>_NIX_GL` (`LINEAR_NIX_GL`,
+  `FIGMA_DESKTOP_NIX_GL`, `NOTION_NIX_GL`, `SUPERHUMAN_DESKTOP_NIX_GL`) overrides the
+  choice:
+
+  | Value | Graphics |
+  | --- | --- |
+  | `auto` (default) | `host` on NixOS or with GL set up already, `software` with only NVIDIA's driver, `mesa` otherwise |
+  | `host` | the environment as it is: `/run/opengl-driver`, nixGL's or your own settings |
+  | `mesa` | nixpkgs' Mesa, even on NixOS |
+  | `software` | SwiftShader, no GPU |
+
+  With Mesa, `launcher.log` says which one. Programs the app opens with `xdg-open` (the
+  browser, for links) get your own graphics setup, not that Mesa.
 - Fonts come from the system's fontconfig setup (`/etc/fonts`).
 - The sandbox needs unprivileged user namespaces, which Arch and most distributions
   allow; `chrome-sandbox` can't be setuid in the store.

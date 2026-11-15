@@ -184,6 +184,7 @@ Each app has an environment prefix: `LINEAR_`, `NOTION_`, `FIGMA_DESKTOP_`,
 | `<PREFIX>_USE_WAYLAND=0` | XWayland instead of native Wayland |
 | `<PREFIX>_TRAFFIC_LIGHTS=0` | no emulated window buttons |
 | `<PREFIX>_FRAMELESS=1` | frameless window, as on macOS. Off by default because Hyprland floats frameless windows; worth trying on desktops that draw their own title bar |
+| `<PREFIX>_NIX_GL=host`, `mesa` or `software` | Nix packages: which GPU drivers to use ([below](#nix)) |
 
 App-specific settings and notes: [docs/apps.md](docs/apps.md).
 
@@ -196,8 +197,11 @@ linear-desktop
 
 This downloads the pinned DMG from the vendor and builds it on your machine.
 `overlays.default` provides `pkgs.linear-desktop` and the others for NixOS and Home
-Manager configurations. On other distributions, see
-[docs/packaging.md](docs/packaging.md#nix) for desktop entries and GPU drivers.
+Manager configurations. On other distributions the apps bring nixpkgs' Mesa for AMD,
+Intel and other Mesa-supported GPUs, so they need no nixGL; with NVIDIA's proprietary
+driver they render in software unless run through nixGL's `nixGLNvidia`. See
+[docs/packaging.md](docs/packaging.md#nix) for desktop entries, GPU drivers and
+`<PREFIX>_NIX_GL`.
 `nix profile upgrade --all` picks up new pins; `nix profile rollback` goes back.
 
 ### Arch Linux packages

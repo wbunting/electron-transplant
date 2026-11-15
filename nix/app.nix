@@ -8,7 +8,8 @@
 #
 # The runtime is Electron's official Linux build, patched as nixpkgs patches its
 # own binary Electron (pkgs/development/tools/electron/binary): the same libraries,
-# nixpkgs' Vulkan loader, and a GApps-wrapped launcher.
+# nixpkgs' Vulkan loader, and a GApps-wrapped launcher. Outside NixOS, the launcher
+# points those at nixpkgs' Mesa (gl-setup.sh).
 {
   lib,
   stdenv,
@@ -23,6 +24,7 @@
   autoPatchelfHook,
   makeWrapper,
   wrapGAppsHook3,
+  addDriverRunpath,
   # Electron's libraries, as nixpkgs' electron lists them.
   alsa-lib,
   at-spi2-atk,
@@ -58,6 +60,8 @@
   libxshmfence,
   libGL,
   vulkan-loader,
+  # GPU drivers outside NixOS (gl-setup.sh).
+  mesa,
   # Commands the apps run.
   coreutils,
   xdg-utils,
@@ -238,11 +242,27 @@ stdenv.mkDerivation {
     runHook postInstall
   '';
 
+  # The app's launcher sets up GPU drivers (gl-setup.sh) in a shell wrapper; the
+  # helpers run Electron as Node and need none.
   preFixup = ''
-    patchShebangs --host "$out/bin"
+    install -D -m 755 ${./host-xdg-open.sh} "$out/libexec/${installId}/host-env/xdg-open"
+    patchShebangs --host "$out/bin" "$out/libexec"
+    substitute ${./gl-setup.sh} "$NIX_BUILD_TOP/gl-setup.sh" \
+      --subst-var-by envPrefix ${entry.envPrefix} \
+      --subst-var-by installId ${installId} \
+      --subst-var-by command ${command} \
+      --subst-var-by driverLink ${addDriverRunpath.driverLink} \
+      --subst-var-by drmClass /sys/class/drm \
+      --subst-var-by mesa ${mesa} \
+      --subst-var-by hostEnv "$out/libexec/${installId}/host-env"
     for program in "$out"/bin/*; do
-      wrapProgram "$program" "''${gappsWrapperArgs[@]}" \
-        --suffix PATH : ${lib.makeBinPath commands}
+      glSetup=()
+      if [[ "$program" == "$out/bin/${command}" ]]; then
+        glSetup=(--run "$(< "$NIX_BUILD_TOP/gl-setup.sh")")
+      fi
+      wrapProgramShell "$program" "''${gappsWrapperArgs[@]}" \
+        --suffix PATH : ${lib.makeBinPath commands} \
+        "''${glSetup[@]}"
     done
   '';
 
