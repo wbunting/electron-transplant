@@ -10,10 +10,28 @@ const USAGE = `electron-transplant: run macOS Electron apps on Linux Electron
 
   electron-transplant apps
       List app configs (apps/<id>/app.cjs).
+  electron-transplant sources [<app>] [--json | --write]
+      Every pinned input per app: vendor DMG (URL, sha256), Linux Electron zip, npm
+      tarballs. --json prints sources.json (one app's entry with <app>); --write
+      regenerates sources.json.
+  electron-transplant fetch <app> [--version V] [--variant NOTE] [--dest DIR] [--electron | --all]
+      Download the pinned DMG from the vendor and verify it, into the download
+      cache (or DIR). --electron: the pinned Electron zip instead; --all: every
+      input an offline build needs.
   electron-transplant build <app> [--dmg PATH] [--install] [--prefix DIR] [--accept-unpinned]
-      Extract the macOS app from its DMG (newest ~/Downloads match by default),
-      verify it, patch it and assemble it on the same Electron version for Linux.
+                              [--electron-zip PATH] [--sevenzip PATH] [--npm-tarball PATH]...
+                              [--inputs DIR] [--out DIR] [--offline]
+      Extract the macOS app from its DMG (newest match in ~/Downloads or the
+      download cache by default), verify it, patch it and assemble it on the same
+      Electron version for Linux, in build/ (or --out DIR).
       --install installs under ~/.local (or --prefix); the profile is untouched.
+      --offline uses only the given inputs (--inputs DIR: by their pinned file
+      names) and 7-Zip on PATH: no network, ~/Downloads, caches or $HOME.
+  electron-transplant install <app> --from BUILD_DIR --layout package --prefix DIR [--destdir DIR]
+      Stage a build for a package manager: <prefix>/lib/<install id>, launchers,
+      desktop entries, icon, licences, under DESTDIR. No side effects.
+  electron-transplant install <app> --from BUILD_DIR [--layout rootless] [--prefix DIR]
+      Install a build as \`build --install\` does.
   electron-transplant inspect <app> [--dmg PATH]
       Survey a DMG: versions, native code, macOS window chrome, URL schemes,
       platform checks. For writing a new app config.
@@ -24,14 +42,17 @@ const USAGE = `electron-transplant: run macOS Electron apps on Linux Electron
       Regenerate compat/platform-apis/electron-<version>.json.
 `;
 
-function parseArgs(argv, { flags = [], values = [] }) {
+// multi: options that may repeat, collected into a list.
+function parseArgs(argv, { flags = [], values = [], multi = [] }) {
   const out = { _: [] };
+  for (const arg of multi) out[arg.slice(2)] = [];
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (flags.includes(arg)) out[arg.slice(2)] = true;
-    else if (values.includes(arg)) {
+    else if (values.includes(arg) || multi.includes(arg)) {
       if (i + 1 >= argv.length) throw Error(`Missing value for ${arg}`);
-      out[arg.slice(2)] = argv[++i];
+      if (multi.includes(arg)) out[arg.slice(2)].push(argv[++i]);
+      else out[arg.slice(2)] = argv[++i];
     } else if (arg.startsWith('-')) throw Error(`Unknown option ${arg}`);
     else out._.push(arg);
   }
@@ -49,15 +70,83 @@ async function main(argv) {
       }
       return;
     }
+    case 'sources': {
+      const args = parseArgs(rest, { flags: ['--json', '--write'] });
+      if (args._.length > 1 || (args.write && (args.json || args._.length))) throw Error('Usage: electron-transplant sources [<app>] [--json | --write]');
+      const { sources, render, SOURCES_FILE } = require(path.join(ROOT, 'lib/sources.cjs'));
+      if (args._.length) loadApp(args._[0]);
+      const all = sources(args._.length ? args._ : undefined);
+      if (args.write) {
+        fs.writeFileSync(SOURCES_FILE, render(sources()));
+        console.log(`Wrote ${SOURCES_FILE}`);
+      } else if (args.json) {
+        process.stdout.write(render(args._.length ? all.apps[args._[0]] : all));
+      } else {
+        for (const [id, app] of Object.entries(all.apps)) {
+          for (const pin of app.pins) {
+            console.log(`${id} ${pin.version}${pin.variant ? ` (${pin.variant})` : ''} -> ${app.command}`);
+            console.log(`  dmg       ${pin.dmg.sha256}  ${pin.dmg.url ?? `no URL: ${app.downloadPage ?? 'see the vendor'}`}${pin.dmg.url ? ` (old versions kept: ${pin.dmg.retention})` : ''}`);
+            console.log(`  electron  ${pin.electron.sha256}  ${pin.electron.url}`);
+            for (const npm of pin.npm) console.log(`  npm       ${npm.sha256}  ${npm.url}`);
+          }
+        }
+      }
+      return;
+    }
+    case 'fetch': {
+      const args = parseArgs(rest, { flags: ['--electron', '--all'], values: ['--version', '--variant', '--dest'] });
+      if (args._.length !== 1 || (args.electron && args.all)) throw Error('Usage: electron-transplant fetch <app> [--version V] [--variant NOTE] [--dest DIR] [--electron | --all]');
+      const { config } = loadApp(args._[0]);
+      const pin = require(path.join(ROOT, 'lib/sources.cjs')).selectPin(config, { version: args.version, variant: args.variant });
+      const what = args.all ? ['dmg', 'electron', 'npm'] : args.electron ? ['electron'] : ['dmg'];
+      const { results, missing } = await require(path.join(ROOT, 'lib/fetch.cjs')).fetchPin(config, pin, { what, dest: args.dest, log: () => {} });
+      for (const [kind, value] of Object.entries(results)) for (const file of [value].flat()) console.log(`${kind.padEnd(8)} ${file}`);
+      if (missing.length) throw Error(missing.join('\n'));
+      return;
+    }
+    case 'install': {
+      const args = parseArgs(rest, { values: ['--from', '--layout', '--prefix', '--destdir'] });
+      const layout = args.layout ?? 'rootless';
+      if (args._.length !== 1 || !args.from || !['package', 'rootless'].includes(layout)) {
+        throw Error('Usage: electron-transplant install <app> --from BUILD_DIR [--layout package|rootless] [--prefix DIR] [--destdir DIR]');
+      }
+      const { config, dir } = loadApp(args._[0]);
+      const from = path.resolve(args.from);
+      const runtime = [path.join(from, 'runtime'), from].find((d) => fs.existsSync(path.join(d, 'TRANSPLANT.json')));
+      if (!runtime) throw Error(`No build in ${from} (expected runtime/TRANSPLANT.json)`);
+      const installer = require(path.join(ROOT, 'lib/install.cjs'));
+      if (layout === 'package') {
+        if (!args.prefix) throw Error('--layout package needs --prefix (e.g. /usr)');
+        installer.installPackage({ config, configDir: dir, runtime, prefix: args.prefix, destdir: args.destdir ? path.resolve(args.destdir) : '' });
+        return;
+      }
+      if (args.destdir) throw Error('--destdir is for --layout package');
+      installer.install({ config, configDir: dir, runtime, prefix: path.resolve(args.prefix ?? path.join(os.homedir(), '.local')) });
+      console.log(`Quit and reopen ${config.name} to use the new build.`);
+      return;
+    }
     case 'build': {
-      const args = parseArgs(rest, { flags: ['--install', '--accept-unpinned'], values: ['--dmg', '--prefix'] });
+      const args = parseArgs(rest, {
+        flags: ['--install', '--accept-unpinned', '--offline'],
+        values: ['--dmg', '--prefix', '--electron-zip', '--sevenzip', '--inputs', '--out'],
+        multi: ['--npm-tarball'],
+      });
       if (args._.length !== 1) throw Error('Usage: electron-transplant build <app> [options]');
+      if (args.offline && args.install) throw Error('--offline builds are for packages: stage them with `install --from DIR --layout package`');
       const { config, dir } = loadApp(args._[0]);
       const { build } = require(path.join(ROOT, 'lib/build.cjs'));
+      const found = args.inputs ? require(path.join(ROOT, 'lib/sources.cjs')).inputsIn(config, path.resolve(args.inputs)) : {};
       const result = await build({
-        config, configDir: dir, dmg: args.dmg, acceptUnpinned: args['accept-unpinned'],
+        config, configDir: dir, acceptUnpinned: args['accept-unpinned'],
+        dmg: args.dmg ?? found.dmg,
+        electronZip: args['electron-zip'] ?? found.electronZip,
+        sevenZip: args.sevenzip,
+        npmTarballs: [...args['npm-tarball'], ...(found.npmTarballs ?? [])],
+        offline: args.offline,
+        out: args.out,
         workRoot: path.join(ROOT, 'build'),
       });
+      if (args.out && !args.install) return;
       if (!args.install) {
         console.log(`Build only. Try it with a throwaway profile:\n  env -u ELECTRON_RUN_AS_NODE ${result.runtime}/electron --user-data-dir=${result.work}/profile`);
         console.log('Add --install to install it. No profile or installation was modified.');

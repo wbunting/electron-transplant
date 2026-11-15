@@ -12,6 +12,9 @@ their vendors, unless this project's changes cause them.
 
 The vendor's DMG is untrusted input until verified:
 
+- `fetch` downloads it over HTTPS from the vendor's host only (every redirect must
+  stay on the hosts the app's `source` lists) and verifies its pin before the file
+  gets its final name.
 - It is read with 7-Zip, never mounted, and nothing from it is executed at build time.
 - Its SHA-256 must match a pin in `apps/<app>/app.cjs`. Apple's code signature is
   **not** checked (there's no Linux tooling for it), so the pins are the trust

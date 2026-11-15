@@ -21,7 +21,9 @@ headless and checks that it starts without errors.
 Vendors ship often, so this is the most common change.
 
 1. Download the new macOS DMG (Intel or universal) from the vendor into the app's
-   download directory (README, "Getting the apps").
+   download directory (README, "Getting the apps"). The app's `source.feed` is the
+   vendor's update feed, which names the current version; its `source.dmg` URL
+   template usually works for the new version too.
 2. `electron-transplant inspect <app>` shows the version, its Electron version, any
    new native code, and whether each configured patch still matches.
 3. Fix patches that no longer match. They are exact-match on purpose: a changed
@@ -35,11 +37,13 @@ Vendors ship often, so this is the most common change.
      can, and use it for a bit;
    - `electron-transplant report <app>` lists the Mac-only APIs it hit at runtime.
 6. Pin it:
-   - add `{ sha256, version, electron, note }` to the app's `pins`, with a comment
-     giving the vendor URL you downloaded it from;
+   - add `{ sha256, version, electron, note }` to the app's `pins` (newest first),
+     and check `electron-transplant fetch <app> --version <version> --dest /tmp/x`
+     downloads the same file from the URL `source.dmg` gives it;
    - for a new Electron version, add its hashes to `pins/electron.json` and commit
      `compat/platform-apis/electron-<version>.json` from
-     `~/.cache/electron-transplant/platform-apis/`.
+     `~/.cache/electron-transplant/platform-apis/`;
+   - `npm run sources` to regenerate `sources.json` (packagers read it).
 7. `npm test`, then open a pull request saying what you checked and what you didn't.
 
 ## Adding an app
@@ -54,13 +58,17 @@ Each app lives in `apps/<id>/` with an `app.cjs` and whatever shims, notes
    `install.schemes`/`install.defaultSchemes` for extra and default URL schemes,
    `install.share` for files that need a fixed path under `~/.local/share/<install.id>`,
    and `install.helpers` for commands that run a script from it with the app's
-   Electron as Node, each with its own desktop entry; see `apps/superhuman/app.cjs`).
+   Electron as Node, each with its own desktop entry; see `apps/superhuman/app.cjs`),
+   and `source`: the vendor's download page, update feed, DMG URL template
+   (`{version}`; one per pin `note` when variants differ, as for Notion), the hosts
+   downloads may use and how long old versions stay downloadable (`retention`).
 2. `electron-transplant inspect <id>` lists its native code (handled or not), Mach-O
    resources, how it loads Electron, macOS window-chrome calls, platform checks and
    whether configured patches match.
 3. Handle each native module and resource; read the bundle around its `darwin`
    window-chrome checks and add patches where its Linux branch should look like macOS.
-4. `build <id> --accept-unpinned`, check it (see "Updating an app" above, step 5), then add the printed hashes.
+4. `build <id> --accept-unpinned`, check it (see "Updating an app" above, step 5), then add the printed hashes
+   and run `npm run sources`.
 
 [docs/how-it-works.md](docs/how-it-works.md) describes what the pipeline and
 compatibility layer do with each config option, and how to check a build headless

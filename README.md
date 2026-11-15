@@ -48,15 +48,15 @@ git clone https://github.com/wbunting/electron-transplant
 cd electron-transplant
 npm ci --ignore-scripts
 
-# Download Linear's macOS DMG from https://linear.app/download into ~/Downloads, then:
+bin/electron-transplant fetch linear      # the pinned macOS DMG, from Linear, verified
 bin/electron-transplant build linear --install
 linear-desktop
 ```
 
-That builds into `build/`, installs under `~/.local` and puts **Linear** in your app
-launcher. It never touches the app's profile (`~/.config/Linear`). If the vendor has
-shipped a newer version than the pinned one, the build stops and says so: see
-[Getting the apps](#getting-the-apps).
+That downloads Linear's own macOS DMG, builds into `build/`, installs under
+`~/.local` and puts **Linear** in your app launcher. It never touches the app's
+profile (`~/.config/Linear`). If the vendor has shipped a newer version than the
+pinned one, the build stops and says so: see [Getting the apps](#getting-the-apps).
 
 ## Why it's safe to run
 
@@ -138,8 +138,12 @@ distributions should work but are untested: reports are welcome.
 
 ### Getting the apps
 
-Download each app's **macOS** DMG from its vendor: the Intel or universal build,
-which are the ones pinned.
+`electron-transplant fetch <app>` downloads the pinned **macOS** DMG (the Intel or
+universal build) from the vendor's own server, checks its SHA-256 and keeps it in
+`~/.cache/electron-transplant/downloads/`, where `build` finds it.
+`electron-transplant sources` lists every URL and hash.
+
+Or download it yourself:
 
 | App | Download | Put it in |
 | --- | --- | --- |
@@ -148,8 +152,10 @@ which are the ones pinned.
 | Figma | https://www.figma.com/downloads/ (Intel) | `~/Downloads/figma-desktop-mac/` |
 | Superhuman | https://superhuman.com/download | `~/Downloads/superhuman-mac/` |
 
-Or pass `--dmg PATH`. A vendor release newer than the pinned one needs pinning first:
-see [CONTRIBUTING.md](CONTRIBUTING.md#updating-an-app-to-a-new-version).
+Or pass `--dmg PATH`. Figma only serves its current and previous release, so an
+older pinned Figma version may no longer be downloadable. A vendor release newer
+than the pinned one needs pinning first: see
+[CONTRIBUTING.md](CONTRIBUTING.md#updating-an-app-to-a-new-version).
 
 ### Commands
 
@@ -157,6 +163,7 @@ see [CONTRIBUTING.md](CONTRIBUTING.md#updating-an-app-to-a-new-version).
 ln -s "$PWD/bin/electron-transplant" ~/.local/bin/   # optional
 
 electron-transplant apps                    # configured apps and pinned versions
+electron-transplant fetch notion            # download and verify the pinned DMG
 electron-transplant inspect notion          # survey a DMG
 electron-transplant build notion            # build into build/ only
 electron-transplant build notion --install  # build and install under ~/.local
@@ -179,6 +186,13 @@ Each app has an environment prefix: `LINEAR_`, `NOTION_`, `FIGMA_DESKTOP_`,
 | `<PREFIX>_FRAMELESS=1` | frameless window, as on macOS. Off by default because Hyprland floats frameless windows; worth trying on desktops that draw their own title bar |
 
 App-specific settings and notes: [docs/apps.md](docs/apps.md).
+
+### Packaging
+
+For distribution packages (pacman, Nix): `sources.json` lists every input with its
+URL and hash, `build --offline` builds from explicit inputs without network or
+`$HOME`, and `install --layout package` stages a `/usr`-style layout into a DESTDIR.
+See [docs/packaging.md](docs/packaging.md).
 
 ## FAQ
 
