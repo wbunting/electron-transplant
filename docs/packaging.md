@@ -156,3 +156,101 @@ Superhuman's `mailto:`). The prefix must be an absolute path of plain characters
   (`<PREFIX>_USE_WAYLAND`), log to `$XDG_CACHE_HOME/<installId>/launcher.log` and
   honour `<PREFIX>_APP_DIR` to point at another runtime.
 - The apps' own updaters are patched off; updates come from new pins here.
+
+## Nix
+
+`flake.nix` packages every app in `sources.json` for `x86_64-linux`. Each package
+downloads the vendor's DMG from the vendor with `fetchurl` and builds it locally in
+the Nix sandbox. No app is cached anywhere, and none of them is in nixpkgs.
+
+| Output | What it is |
+| --- | --- |
+| `packages.x86_64-linux.{linear,figma,notion,superhuman}` | the apps (`linear-desktop-1.32.8`, …); `nix run` starts the launcher |
+| `overlays.default` | `pkgs.linear-desktop`, `pkgs.figma-desktop`, `pkgs.notion-desktop`, `pkgs.superhuman-desktop` (nixpkgs already has `linear` and `notion`) |
+| `lib.mkTransplantApp pkgs { app; version ? null; variant ? null; }` | any pin, e.g. `{ app = "notion"; variant = "x86_64"; }` (default: the first pin, as `build` picks it) |
+| `checks`, `formatter`, `devShells.default` | evaluation of every pin, `npm test` in the sandbox, nixfmt; Node, Python, unzip and 7-Zip for working on this repository |
+
+```sh
+nix build github:wbunting/electron-transplant#linear      # ./result/bin/linear-desktop
+nix profile add github:wbunting/electron-transplant#linear # `nix profile install` on older Nix
+nix profile add github:wbunting/electron-transplant#figma
+linear-desktop
+```
+
+On NixOS, or with Home Manager:
+
+```nix
+# flake inputs
+inputs.electron-transplant.url = "github:wbunting/electron-transplant";
+inputs.electron-transplant.inputs.nixpkgs.follows = "nixpkgs"; # optional: build with your nixpkgs
+
+# NixOS: the overlay, with your own unfree settings
+nixpkgs.overlays = [ inputs.electron-transplant.overlays.default ];
+nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ "linear-desktop" "figma-desktop" ];
+environment.systemPackages = [ pkgs.linear-desktop pkgs.figma-desktop ];
+
+# Home Manager: the flake's packages as they are
+home.packages = [ inputs.electron-transplant.packages.${pkgs.stdenv.hostPlatform.system}.linear ];
+```
+
+**Unfree.** The apps are the vendors' (`meta.license` is `unfree`; electron-transplant's
+own code in them is MIT). The flake's `packages` come from a nixpkgs that allows exactly
+these four packages, because asking for one of them is already the choice to use that
+vendor's app. The overlay builds with your nixpkgs, so your `allowUnfree` or
+`allowUnfreePredicate` decides, as for any other unfree package.
+
+**What the derivation does** (`nix/app.nix`): `fetchurl` the pin's DMG, Electron zip
+and npm tarballs (URLs and hashes from `sources.json`); `electron-transplant build
+--offline` with them and nixpkgs' `_7zz`; `install --layout package --prefix $out`;
+then the treatment nixpkgs gives its own binary Electron: `autoPatchelfHook` on
+`lib/<installId>` with the same libraries, nixpkgs' Vulkan loader in place of the
+bundled one, and a launcher wrapped by `wrapGAppsHook3` (GSettings schemas,
+`XDG_DATA_DIRS`) with `xdg-open`, `fc-list` (Figma's local fonts) and clipboard tools
+(Superhuman's sign-in helper) after your own `PATH`. The vendor's and Electron's
+files are not stripped or rewritten otherwise. `@electron/asar` comes from
+`package-lock.json` through nixpkgs' `importNpmLock`, so there is no extra hash to keep
+in sync. A pin bump here (`npm run sources`) needs no Nix change.
+
+**A DMG that can't be downloaded any more.** Figma serves only its current and previous
+release, so two Figma releases after a pin, `fetchurl` fails with HTTP 403. A copy of
+the pinned DMG with the right hash still builds: add it to the store under its pinned
+file name (`dmg.file`) and the build finds it there instead of downloading.
+
+```sh
+nix-store --add-fixed sha256 Figma-126.11.9.dmg   # the file must have the pinned name and hash
+# or: nix-prefetch-url file:///path/to/Figma-126.11.9.dmg
+nix build github:wbunting/electron-transplant#figma
+```
+
+The DMG isn't part of the built package, so `nix-collect-garbage` removes it again;
+add it again before the next rebuild. A pin with no URL at all asks for the file the
+same way (`requireFile`).
+
+**Updates and rollback.** Nothing polls the vendors and the apps' own updaters are off:
+a new version arrives when this repository pins it. Then `nix profile upgrade linear`
+(or `--all`), or `nix flake update electron-transplant` in your own flake and a
+rebuild, downloads the new DMG and builds it. `nix profile rollback` (`nix profile
+history` lists generations), NixOS and Home Manager generations go back. An older
+revision of this repository builds its own pins
+(`nix build github:wbunting/electron-transplant/<rev>#linear`), as long as the vendor
+still serves that DMG.
+
+**Outside NixOS** (Arch, Fedora, … with Nix installed):
+
+- Desktop entries and icons are in `~/.nix-profile/share` (`~/.local/state/nix/profile/share`
+  with `use-xdg-base-directories`). The Nix installer's shell profile adds it to
+  `XDG_DATA_DIRS`; check that your graphical session gets it too, or launchers won't
+  list the apps. `Exec=` points into the store, so `PATH` doesn't matter. A rootless
+  install (`build --install`) of the same app has a desktop entry in
+  `~/.local/share/applications` with the same name, which wins: remove one of them.
+- URL schemes: the desktop entries list them, but nothing becomes a default handler.
+  `xdg-mime default linear-desktop.desktop x-scheme-handler/linear` makes it one.
+- GPU: nixpkgs' OpenGL and Vulkan look for drivers only where NixOS puts them
+  (`/run/opengl-driver`). Elsewhere Chromium falls back to software rendering, which
+  works for these apps but costs CPU. [nixGL](https://github.com/nix-community/nixGL)
+  (`nix run --impure github:nix-community/nixGL -- linear-desktop`, or Home Manager's
+  `targets.genericLinux.nixGL`) provides the host's drivers.
+- Fonts come from the system's fontconfig setup (`/etc/fonts`).
+- The sandbox needs unprivileged user namespaces, which Arch and most distributions
+  allow; `chrome-sandbox` can't be setuid in the store.
+- The app's profile (`~/.config/Linear`, …) is the same one other installs use.

@@ -187,12 +187,25 @@ Each app has an environment prefix: `LINEAR_`, `NOTION_`, `FIGMA_DESKTOP_`,
 
 App-specific settings and notes: [docs/apps.md](docs/apps.md).
 
+### Nix
+
+```sh
+nix profile add github:wbunting/electron-transplant#linear   # or #figma, #notion, #superhuman
+linear-desktop
+```
+
+This downloads the pinned DMG from the vendor and builds it on your machine.
+`overlays.default` provides `pkgs.linear-desktop` and the others for NixOS and Home
+Manager configurations. On other distributions, see
+[docs/packaging.md](docs/packaging.md#nix) for desktop entries and GPU drivers.
+`nix profile upgrade --all` picks up new pins; `nix profile rollback` goes back.
+
 ### Packaging
 
 For distribution packages (pacman, Nix): `sources.json` lists every input with its
 URL and hash, `build --offline` builds from explicit inputs without network or
 `$HOME`, and `install --layout package` stages a `/usr`-style layout into a DESTDIR.
-See [docs/packaging.md](docs/packaging.md).
+See [docs/packaging.md](docs/packaging.md); the Nix flake is built on it.
 
 ## FAQ
 
