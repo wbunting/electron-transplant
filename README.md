@@ -200,12 +200,28 @@ Manager configurations. On other distributions, see
 [docs/packaging.md](docs/packaging.md#nix) for desktop entries and GPU drivers.
 `nix profile upgrade --all` picks up new pins; `nix profile rollback` goes back.
 
+### Arch Linux packages
+
+Each app has a PKGBUILD in [`packaging/arch/`](packaging/arch). makepkg downloads the
+vendor's DMG from the vendor and builds a pacman package (`linear-transplant`,
+`figma-transplant`, `notion-transplant`, `superhuman-transplant`) installing under
+`/usr`:
+
+```sh
+cd packaging/arch/linear
+makepkg -si        # builds, then installs with pacman (sudo)
+```
+
+To update: `git pull` and run it again. `electron-transplant pkgbuild <app> --build`
+builds one for any pin; see [docs/packaging.md](docs/packaging.md#arch-linux-pacman).
+
 ### Packaging
 
 For distribution packages (pacman, Nix): `sources.json` lists every input with its
 URL and hash, `build --offline` builds from explicit inputs without network or
 `$HOME`, and `install --layout package` stages a `/usr`-style layout into a DESTDIR.
-See [docs/packaging.md](docs/packaging.md); the Nix flake is built on it.
+See [docs/packaging.md](docs/packaging.md); the Nix flake and the Arch PKGBUILDs are
+built on it.
 
 ## FAQ
 

@@ -254,3 +254,128 @@ still serves that DMG.
 - The sandbox needs unprivileged user namespaces, which Arch and most distributions
   allow; `chrome-sandbox` can't be setuid in the store.
 - The app's profile (`~/.config/Linear`, …) is the same one other installs use.
+
+## Arch Linux (pacman)
+
+`packaging/arch/<app>/` holds a PKGBUILD and `.SRCINFO` for each app's preferred pin:
+
+```sh
+git clone https://github.com/wbunting/electron-transplant
+cd electron-transplant/packaging/arch/linear
+makepkg -si
+```
+
+makepkg downloads the vendor's DMG from the vendor, the Linux Electron zip from
+GitHub, electron-transplant at its release tag and `@electron/asar`'s tarballs from
+npm, and checks every one against `sha256sums`. `build()` is the offline build and
+`package()` the staged install above. `-s` installs missing dependencies and `-i`
+the package, with pacman (both ask for sudo). Or build without installing and
+install the file yourself: `makepkg -s`, then `sudo pacman -U linear-transplant-*.pkg.tar.zst`.
+
+| App | Package | Command | `conflicts=` |
+| --- | --- | --- | --- |
+| Linear | `linear-transplant` | `linear-desktop` | `linear-bin` (AUR; ships `/usr/bin/linear-desktop` and `/usr/lib/linear-desktop`) |
+| Figma | `figma-transplant` | `figma-desktop` | |
+| Notion | `notion-transplant` | `notion-desktop` | `notion-desktop` (Omarchy's package, and the AUR's `notion-desktop-git`, which provides it; both ship `/usr/bin/notion-desktop`) |
+| Superhuman | `superhuman-transplant` | `superhuman-desktop` | |
+
+Package names end in `-transplant` so they collide with nothing: the AUR has
+`linear-bin`, `linear-desktop-bin`, `linear-electron`, `figma-linux`,
+`notion-app-electron`, `superhuman` and more, packaging other builds of these apps.
+`conflicts=` (the app config's `install.conflicts`) lists the packages that install
+the same files. The packages `provide` nothing: no other package name describes
+them accurately.
+
+### What the PKGBUILD does
+
+- `source=`: the DMG (as `<pinned file>::<vendor URL>`), the Electron zip, npm
+  prebuilds (Notion), electron-transplant (`git+https://…#tag=v<version>`) and
+  `package-lock.json`'s tarballs. Every file has its sha256; only the git source is
+  `SKIP`, as for any git source (the tag or commit pins it). Archives are in
+  `noextract=`: the build reads them by name. The npm tarballs' sha256s are in
+  `packaging/arch/npm-sources.json`, derived from tarballs verified against the
+  lockfile's sha512.
+- `prepare()` unpacks `@electron/asar` and its dependencies where
+  `npm ci --ignore-scripts` would; no npm, no network.
+- `build()`: `electron-transplant build <app> --offline --inputs "$srcdir" --dmg … --sevenzip /usr/lib/7zip/7z`.
+- `package()`: `electron-transplant install <app> --layout package --prefix /usr --destdir "$pkgdir"`,
+  and `/usr/share/licenses/<pkgname>` links to the licence directory.
+- `options=('!strip' '!debug')`: Electron's binaries stay exactly as Electron ships them.
+- `license=('LicenseRef-proprietary' 'MIT' 'BSD-3-Clause')`: the vendor's app (its
+  own terms), Electron and electron-transplant, Chromium (`LICENSES.chromium.html`
+  lists the rest).
+- `pkgver` is the vendor's version (characters pacman doesn't allow become `_`), `pkgrel` 1.
+- `depends=` are the Electron binary's libraries (namcap finds no missing ones),
+  bash and `hicolor-icon-theme`; `optdepends=` libnotify, libsecret and xdg-utils,
+  which Electron loads or runs when present.
+- No install scriptlet: pacman's hooks (desktop-file-utils, gtk-update-icon-cache)
+  refresh the desktop database and icon cache. The desktop entry lists the app's URL
+  schemes; it doesn't become their default handler (`xdg-mime default
+  linear-desktop.desktop x-scheme-handler/linear` makes it one).
+
+### Generating PKGBUILDs
+
+```sh
+electron-transplant pkgbuild <app> [--version V] [--variant NOTE] [--commit SHA | --local]
+                             [--pkgrel N] [--maintainer 'NAME <EMAIL>'] [--out DIR] [--build]
+```
+
+Prints the PKGBUILD for a pin (default: the app's first), or with `--out DIR` writes
+it and its `.SRCINFO` (as `makepkg --printsrcinfo` writes it; makepkg isn't needed).
+electron-transplant itself comes from:
+
+- the release tag `v<version>` of `package.json` (default; what `packaging/arch/` uses);
+- `--commit SHA`: a commit already pushed to GitHub, pinned with `#commit=`;
+- `--local`: a tarball of this checkout as it is (uncommitted changes and new files,
+  not ignored ones), written beside the PKGBUILD with its sha256. For trying a
+  change before it is pushed; never publish one.
+
+The build checks the DMG against the pins of the electron-transplant it runs, so a
+tag or commit must pin the same DMG; the command checks that in your checkout and
+refuses otherwise. `--build` also runs `makepkg --cleanbuild --force --syncdeps` in
+DIR (default `~/.cache/electron-transplant/pkgbuild/<app>`, so downloads are
+reused) and prints the package to install with `sudo pacman -U`.
+`electron-transplant pkgbuild --write` regenerates `packaging/arch/` (`--refresh-npm`
+after `package-lock.json` changes); `npm test` fails when it drifts.
+
+### Release tags
+
+A committed PKGBUILD can't name the commit that contains it, so `packaging/arch/`
+pins the release tag `v<version>` instead. A change to anything a build needs (a
+pin, a patch, the build itself) is released by bumping `package.json`'s version,
+regenerating, merging, and then tagging the merge commit `v<version>` and pushing
+the tag. Until the tag is pushed, the committed PKGBUILDs can't fetch
+electron-transplant: generate one with `--commit` or `--local` instead.
+`pkgbuild --write` fails if the tag exists locally with different pins.
+
+### Updates
+
+1. A new vendor release is pinned here (CONTRIBUTING.md), with a version bump and
+   regenerated PKGBUILDs, and tagged once merged.
+2. Its `pkgver` is the new vendor version, so pacman sees an upgrade.
+3. `git pull`, then `makepkg -si` in `packaging/arch/<app>` again (or the AUR
+   helper's upgrade, for a package published there). A fix to electron-transplant
+   alone, with the same vendor version, needs `--pkgrel 2` and so on.
+
+The apps never update themselves (their updaters are patched off). Figma keeps only
+its current and previous release downloadable: its DMG URL stops working once Figma
+has shipped two newer releases. The hash still matches the same DMG obtained another
+way: put it in the PKGBUILD's directory (or `SRCDEST`) under its pinned file name.
+
+### Publishing to the AUR
+
+Nothing here publishes anything. To publish a package, a maintainer would check the
+name is still free (`https://aur.archlinux.org/rpc/v5/info?arg[]=linear-transplant`),
+then:
+
+```sh
+electron-transplant pkgbuild linear --commit "$(git rev-parse v0.2.0^{commit})" \
+  --maintainer 'Name <email>' --out /tmp/aur-linear
+cd /tmp/aur-linear && makepkg -s && namcap PKGBUILD *.pkg.tar.zst
+git clone ssh://aur@aur.archlinux.org/linear-transplant.git && cp PKGBUILD .SRCINFO linear-transplant/
+cd linear-transplant && git add PKGBUILD .SRCINFO && git commit -m 'linear-transplant 1.32.8-1' && git push
+```
+
+The package is a build recipe: it downloads the vendor's DMG from the vendor and
+distributes nothing of theirs, as the AUR requires. Keep Figma's package current:
+its source URL lasts for one more Figma release.
