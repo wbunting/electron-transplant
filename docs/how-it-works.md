@@ -5,6 +5,14 @@ to a DMG, what runs inside the app, and how to check a build.
 
 ## Pipeline (`lib/build.cjs`)
 
+Inputs: the vendor DMG (`fetch` downloads it from the recipe's `source.dmg` URL into
+`~/.cache/electron-transplant/downloads/<app>/<sha256>/`, over HTTPS on the recipe's
+`source.hosts` only, verified before it is renamed into place; `build` also looks in
+`~/Downloads`), the Linux Electron zip, npm prebuild tarballs and 7-Zip. All of them
+can be passed explicitly; `--offline` then uses only those and never the network,
+the caches or `$HOME` ([packaging.md](packaging.md)). `sources.json` lists them per
+pin, generated from the recipes (`lib/sources.cjs`).
+
 1. **Extract** with 7-Zip (UDIF → HFS+): only `Info.plist`, `Resources/` and the
    Electron framework's `Info.plist`, never HFS+ extended attributes. Nothing from
    the DMG is executed. The `.app` is found by listing the image (volume names vary).
@@ -38,6 +46,10 @@ app names in `asar.dropInvalidEntries` (Figma's `/.codesign`, size −1000) are 
 via a sanitised copy; the integrity check hashes the header as stored.
 
 ## Install layout (`lib/install.cjs`)
+
+Two layouts. Packages use `install --layout package`: `<prefix>/lib/<id>`, final
+paths baked in, staged into a DESTDIR, no side effects ([packaging.md](packaging.md)).
+The rootless install, below, is for a checkout.
 
 `--install` puts the runtime in `~/.local/opt/<id>/<version>-local-<hash>/` behind an
 atomic `current` symlink (old runtimes stay for rollback), plus a launcher in
@@ -109,9 +121,12 @@ compositing every view into PNGs. Headless Electron ignores fullscreen, and nati
 
 ## Tests
 
-`npm test`: unit tests; real-Electron tests (recorder unchanged-behaviour on 44.9.1 and
-45.1.0, facade via `require`/`electron/main`/`import`/ES main, traffic lights and page
-adapter, glyph centring at 1×/1.5×/2×); install/launcher; and a full build of every
-app whose pinned DMG is in its download directory. Electron tests skip when the pinned zip
-isn't cached (`~/.cache/electron-transplant`); `npm run fetch-electron` downloads and
+`npm test`: unit tests (including downloads against a fake server, offline input
+checks, package staging and `sources.json` drift); real-Electron tests (recorder
+unchanged-behaviour on 44.9.1 and 45.1.0, facade via `require`/`electron/main`/
+`import`/ES main, traffic lights and page adapter, glyph centring at 1×/1.5×/2×);
+install/launcher; and a full build of every app whose pinned DMG is in its download
+directory or the download cache, run as a package build: offline, explicit inputs,
+no `$HOME`, then staged for `/usr`. Electron tests skip when the pinned zip isn't
+cached (`~/.cache/electron-transplant`); `npm run fetch-electron` downloads and
 verifies every pinned version. CI runs everything except the DMG builds.

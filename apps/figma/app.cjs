@@ -19,8 +19,18 @@ module.exports = {
   envPrefix: 'FIGMA_DESKTOP',
   // Its own directory: the download is untrusted data, kept apart.
   dmg: { dir: 'figma-desktop-mac', glob: 'Figma-*.dmg', app: 'Figma.app' },
+  source: {
+    page: 'https://www.figma.com/downloads/',
+    // Version and zip URL, no hash (the Mac updater relies on the code signature).
+    feed: { type: 'figma-release-json', url: 'https://desktop.figma.com/mac/RELEASE.json' },
+    // Intel; the same object as mac/Figma.dmg while it is the current release.
+    dmg: 'https://desktop.figma.com/mac/Figma-{version}.dmg',
+    hosts: ['desktop.figma.com'],
+    // Only the current and previous versions are served; older ones return 403.
+    retention: 'current-and-previous',
+  },
   pins: [
-    // https://desktop.figma.com/mac/Figma.dmg (Intel; the JS is the same in every build).
+    // Intel: the JS is the same in every build.
     { sha256: 'e908f72f585ab9f6338bb677ab66e40b508e34889112f1b51ff4f54a48f70ee9', version: '126.11.9', electron: '44.11.2', note: 'x86_64' },
   ],
   install: {

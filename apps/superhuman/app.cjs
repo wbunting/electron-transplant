@@ -13,9 +13,17 @@ module.exports = {
   envPrefix: 'SUPERHUMAN_DESKTOP',
   // Its own directory: the download is untrusted data, kept apart.
   dmg: { dir: 'superhuman-mac', glob: 'Superhuman-*.dmg', app: 'Superhuman.app' },
+  source: {
+    page: 'https://superhuman.com/download',
+    // Releases can be staged (stagingPercentage).
+    feed: { type: 'electron-builder', url: 'https://storage.googleapis.com/download.superhuman.com/native-update/latest-mac.yml' },
+    // Versioned despite the name; Intel.
+    dmg: 'https://storage.googleapis.com/download.superhuman.com/native-update/Superhuman-{version}-latest.dmg',
+    hosts: ['storage.googleapis.com'],
+    retention: 'unknown',
+  },
   pins: [
-    // https://storage.googleapis.com/download.superhuman.com/native-update/Superhuman-1045.0.0-latest.dmg
-    // (Intel; latest-mac.yml publishes its SHA-512, which matched).
+    // Intel; latest-mac.yml publishes its SHA-512, which matched.
     { sha256: 'd5e9d30bdfe36658641a4783a58e63711078d76a80d0aefe7fd9610966a77414', version: '1045.0.0', electron: '45.2.3', note: 'x86_64' },
   ],
   install: {
