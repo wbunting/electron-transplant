@@ -50,6 +50,35 @@ test('every pin lists a verifiable HTTPS DMG, a pinned Linux Electron zip and it
   assert.deepEqual(doc.apps.superhuman.helpers, ['superhuman-desktop-finish-login']);
 });
 
+// The Nix packages (nix/app.nix) read sources.json at evaluation time, without Node.
+test('sources.json has every field the Nix packages read, with the types they expect', () => {
+  const doc = JSON.parse(fs.readFileSync(SOURCES_FILE, 'utf8'));
+  const str = (value, what) => assert.equal(typeof value, 'string', what);
+  const strOrNull = (value, what) => assert.ok(value === null || typeof value === 'string', what);
+  const fetchable = (input, what) => {
+    str(input.url, `${what}.url`);
+    assert.match(input.sha256, SHA, `${what}.sha256`);
+    // fetchurl's name: a store path name.
+    assert.match(input.file, /^[A-Za-z0-9+_?=-][A-Za-z0-9+._?=-]*$/, `${what}.file`);
+  };
+  for (const [id, app] of Object.entries(doc.apps)) {
+    for (const key of ['name', 'installId', 'command', 'displayName', 'comment']) str(app[key], `${id}.${key}`);
+    strOrNull(app.downloadPage, `${id}.downloadPage`);
+    assert.ok(Array.isArray(app.helpers), `${id}.helpers`);
+    for (const pin of app.pins) {
+      const at = `${id} ${pin.version}`;
+      str(pin.version, `${at}.version`);
+      strOrNull(pin.variant, `${at}.variant`);
+      assert.match(pin.dmg.sha256, SHA, `${at}.dmg.sha256`);
+      if (pin.dmg.url === null) assert.equal(pin.dmg.file, null, `${at}.dmg.file`);
+      else fetchable(pin.dmg, `${at}.dmg`);
+      str(pin.electron.version, `${at}.electron.version`);
+      fetchable(pin.electron, `${at}.electron`);
+      for (const npm of pin.npm) fetchable(npm, `${at}.npm`);
+    }
+  }
+});
+
 test('`sources --json` prints the file, or one app\'s entry', () => {
   assert.equal(execFileSync(CLI, ['sources', '--json'], { encoding: 'utf8' }), fs.readFileSync(SOURCES_FILE, 'utf8'));
   const linear = JSON.parse(execFileSync(CLI, ['sources', 'linear', '--json'], { encoding: 'utf8' }));

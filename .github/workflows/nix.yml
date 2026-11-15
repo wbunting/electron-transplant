@@ -1,0 +1,21 @@
+name: nix
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  flake:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      # Evaluates every app and pin, builds electron-transplant with its locked npm
+      # dependency, runs npm test in the build sandbox and checks formatting. Nothing
+      # here needs a vendor DMG: building the apps themselves is left to users.
+      - run: nix flake check -L
+      - run: nix flake show
